@@ -1,5 +1,5 @@
 from Account import Account
-from ImportUtils import getCsv, cleanText, checksum, fixNumber
+from ImportUtils import getCsv, cleanText, fixNumber
 from Action import Action, EActionType
 from decimal import Decimal
 from datetime import datetime
@@ -30,15 +30,13 @@ class MBankAccount(Account):
                 if row['Typ operacji'] == cleanText('Uznania') and row['Opis'].startswith('Dywidenda: '):
                     isin = row['Opis'].split('(', 1)[0].strip().split(' ')[-1]
                     name = row['Opis'].split('(', 1)[1].split(')', 1)[0].strip()
-                    main = Action(checksum(row['Opis']),
-                                  time,
+                    main = Action(time,
                                   EActionType.DIVIDEND,
                                   Decimal(1),
                                   self.stock(isin=isin, ticker=name, currency='PLN'))
 
                     self._add(main)
-                    main.addAction(Action(checksum(row['Opis']+'-cash'),
-                                          time,
+                    main.addAction(Action(time,
                                           EActionType.INCOME,
                                           kwota,
                                           self.currency('PLN')))
@@ -52,46 +50,40 @@ class MBankAccount(Account):
                     cur = row['Opis'].split('/szt', 1)[0].split(' ')[-1]
                     conv = Decimal(row['Opis'].split('/PLN ', 1)[1].strip())
 
-                    main = Action(checksum(row['Opis']),
-                                  time,
+                    main = Action(time,
                                   EActionType.DIVIDEND,
                                   szt,
                                   self.stock(isin=isin, currency=cur))
                     self._add(main)
                     
-                    sub = Action(checksum(row['Opis']+"-gain"),
-                                 time,
+                    sub = Action(time,
                                  EActionType.INCOME,
                                  value*szt,
                                  self.currency(cur))
 
                     main.addAction(sub)
 
-                    sub2 = Action(checksum(row['Opis']+"-convert"),
-                                  time,
+                    sub2 = Action(time,
                                   EActionType.SELL,
                                   kwota/conv*Decimal(-1),
                                   self.currency(cur))
 
                     sub.addAction(sub2)
 
-                    sub2.addAction(Action(checksum(row['Opis']+"-pln"),
-                                   time,
-                                   EActionType.BUY,
-                                   kwota,
-                                   self.currency('PLN')))
+                    sub2.addAction(Action(time,
+                                          EActionType.BUY,
+                                          kwota,
+                                          self.currency('PLN')))
 
-                    sub.addAction(Action(checksum(row['Opis']+"-tax"),
-                                          time,
-                                          EActionType.TAX,
-                                          kwota/conv-szt*value,
-                                          self.currency(cur)))
+                    sub.addAction(Action(time,
+                                         EActionType.TAX,
+                                         kwota/conv-szt*value,
+                                         self.currency(cur)))
                     continue
             
                 if row['Typ operacji'] == cleanText('Obciążenia') and row['Opis'].startswith('Przelew na rachunek bankowy'):
                     # sending funds
-                    main = Action(checksum(row['Opis']),
-                                  time,
+                    main = Action(time,
                                   EActionType.SEND,
                                   kwota,
                                   self.currency(row['Opis'].split('/')[-1].strip()))
@@ -101,8 +93,7 @@ class MBankAccount(Account):
 
                 if row['Typ operacji'] == cleanText('Obciążenia') and row['Opis'].startswith(cleanText('Księgowanie prowizji od dyspozycji przelewu')) and last_send_outside:
                     # sending funds - fee
-                    main = Action(checksum(row['Opis']),
-                                  time,
+                    main = Action(time,
                                   EActionType.FEE,
                                   kwota,
                                   last_send_outside.asset)
@@ -114,8 +105,7 @@ class MBankAccount(Account):
                 
                 if row['Typ operacji'] == cleanText('Uznania') and row['Opis'].startswith('WYC.BK:'):
                     # new funds adding
-                    main = Action(checksum(row['Opis']),
-                                  time,
+                    main = Action(time,
                                   EActionType.RECEIVE,
                                   kwota,
                                   self.currency('PLN'))
@@ -156,7 +146,6 @@ class MBankAccount(Account):
             sumValue = Decimal(fixNumber(row[cleanText('Wartość')]))
             fee = Decimal(fixNumber(row['Prowizja']))
         
-            crc = str(row)
             k = row['K/S'] == 'K'
 
             order = orders.pop(0)
@@ -168,8 +157,7 @@ class MBankAccount(Account):
                 if feeOrder[0].date() != time.date() or -fee != feeOrder[1] or feeOrder[2] != order[2]:
                     raise Exception("Finance and Transation history don't match: %s != %s" % (str(feeOrder), str(row)))
 
-            main = Action(checksum(crc),
-                          time,
+            main = Action(time,
                           EActionType.BUY if k else EActionType.SELL,
                           count * (Decimal(1) if k else Decimal(-1)),
                           self.stock(isin=order[2], ticker=row['Walor'], exchange=row[cleanText('Giełda')], currency=stokcCurrency))
@@ -177,44 +165,38 @@ class MBankAccount(Account):
             self._add(main)
 
             if fee:
-                f = Action(checksum(crc),
-                           time,
+                f = Action(time,
                            EActionType.FEE,
                            -fee,
                            self.currency(currency))
                 main.addAction(f)
 
             if stokcCurrency != currency:
-                sub = Action(checksum(crc),
-                             time,
+                sub = Action(time,
                              EActionType.PAYMENT if k else EActionType.INCOME,
                              value * count * (Decimal(-1) if k else Decimal(1)),
                              self.currency(stokcCurrency))
 
                 main.addAction(sub)
                 
-                sub2 = Action(checksum(crc),
-                              time,
+                sub2 = Action(time,
                               EActionType.BUY if k else EActionType.SELL,
                               value * count * (Decimal(1) if k else Decimal(-1)),
                               self.currency(stokcCurrency))
 
                 sub.addAction(sub2)
 
-                sub3 = Action(checksum(crc),
-                              time,
+                sub3 = Action(time,
                               EActionType.SELL if k else EActionType.BUY,
                               sumValue * (Decimal(-1) if k else Decimal(1)),
                               self.currency(currency))
 
                 sub.addAction(sub3)
             else:
-                sub = Action(checksum(crc),
-                              time,
-                              EActionType.PAYMENT if k else EActionType.INCOME,
-                              sumValue * (Decimal(-1) if k else Decimal(1)),
-                              self.currency(currency))
-
+                sub = Action(time,
+                             EActionType.PAYMENT if k else EActionType.INCOME,
+                             sumValue * (Decimal(-1) if k else Decimal(1)),
+                             self.currency(currency))
                 main.addAction(sub)
 
         if orders:

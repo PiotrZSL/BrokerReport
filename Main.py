@@ -4,6 +4,8 @@ from DifAccount import DifAccount
 from ExanteAccount import ExanteAccount
 from ExcelOutput import ExcelOutput
 
+from TaxCalculator import TaxCalculator
+
 import argparse, os, os.path
 
 parser = argparse.ArgumentParser(description='Makler Reports Processor')
@@ -54,5 +56,8 @@ for broker in os.listdir(args.reports_folder):
 
 for x in accounts:
     x.dump()
+
+for x in accounts:
+    TaxCalculator(x).calculate()
 
 ExcelOutput(args.output_xls, accounts).save()

@@ -12,11 +12,9 @@ class EActionType(Enum):
     FOREX = 8
     PAYMENT = 9
     INCOME = 10
-    TAX_PENDING = 11
 
 class Action:
-    def __init__(self, actionId, time, actionType, count, asset, percent = None):
-        self._actionId = actionId
+    def __init__(self, time, actionType, count, asset, percent = None):
         self._time = time
         self._actionType = actionType
         self._count = count
@@ -24,10 +22,7 @@ class Action:
         self._percent = percent
         self._parent = None
         self._actions = SortedList(key=lambda x : x.time)
-
-    @property
-    def id(self):
-        return self._actionId
+        self._taxCalculations = []
 
     @property
     def time(self):
@@ -48,6 +43,17 @@ class Action:
     @property
     def parent(self):
         return self._parent
+
+    @property
+    def flat_actions(self):
+        actions = []
+        stack = [ x for x in self._actions ]
+        while stack:
+            act = stack[0]
+            actions.append(act)
+            del stack[0]
+            stack += [ x for x in act.actions ]
+        return actions
     
     @property
     def actions(self):
@@ -60,18 +66,12 @@ class Action:
     def addAction(self, action):
         action._parent = self
         self._actions.add(action)
+
+    def addTaxCalculation(self, action, value):
+        self._taxCalculations.append((action, value))
     
     def dump(self, prefix = ''):
         p = '' if not self._percent else "(%s %%)" % (str(self._percent))
-        print('%s%s - %s %s %s %s %s' % (prefix, self._actionId, self._time, self._actionType.name, self._count, self._asset, p))
+        print('%s %s %s %s %s %s' % (prefix, self._time, self._actionType.name, self._count, self._asset, p))
         for x in self._actions:
             x.dump(prefix+'\t')
-
-class TaxAction(Action):
-    def __init__(self, actionId, year, time, actionType, count, asset):
-        super().__init__(actionId, time, time, count, asset)
-        self._year = year
-
-    @property
-    def year(self):
-        return self._year

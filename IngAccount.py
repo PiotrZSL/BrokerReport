@@ -1,5 +1,5 @@
 from Account import Account
-from ImportUtils import getCsv, cleanText, checksum, fixNumber
+from ImportUtils import getCsv, cleanText, fixNumber
 from Action import Action, EActionType
 from decimal import Decimal
 from datetime import datetime
@@ -29,14 +29,12 @@ class IngAccount(Account):
                     count =  Decimal(row['Opis'].split(':', 1)[1].split(' x ', 1)[0])
                     income = Decimal(fixNumber(row['Kwota']))
                     if 'rozliczenie' in row['Opis']:
-                        main = Action(checksum(row['Opis']),
-                                      time,
+                        main = Action(time,
                                       EActionType.DIVIDEND,
                                       count,
                                       self.stock(isin=isin, exchange='WWA', currency='PLN'))
 
-                        sub = Action(checksum(row['Opis']+'sub1'),
-                                     time,
+                        sub = Action(time,
                                      EActionType.INCOME,
                                      income,
                                      self.currency(row['Waluta']))
@@ -47,8 +45,7 @@ class IngAccount(Account):
                         continue
 
                     if 'podatek' in row['Opis'] and prev_dividend:
-                        sub = Action(checksum(row['Opis']+'tax'),
-                                     time,
+                        sub = Action(time,
                                      EActionType.TAX,
                                      income,
                                      self.currency(row['Waluta']))
@@ -63,11 +60,10 @@ class IngAccount(Account):
                     value = Decimal(fixNumber(row['Kwota']))
                     cur = row['Waluta']
 
-                    self._add(Action(checksum(row['Opis']),
-                                    time,
-                                    EActionType.RECEIVE if value > Decimal(0) else EActionType.SEND,
-                                    value,
-                                    self.currency(cur)))
+                    self._add(Action(time,
+                                     EActionType.RECEIVE if value > Decimal(0) else EActionType.SEND,
+                                     value,
+                                     self.currency(cur)))
                     continue
 
                 if row['Typ operacji'] == cleanText('Blokady pod zlecenia') or row['Typ operacji'] == cleanText('Transakcje'):
@@ -88,21 +84,18 @@ class IngAccount(Account):
                 nr = row['Numer zlecenia']
                 isin = isin_mapping[nr]
                 k = row['Kierunek'] == 'Kupno'
-                main = Action(checksum(nr),
-                              time,
+                main = Action(time,
                               EActionType.BUY if k else EActionType.SELL,
                               Decimal(fixNumber(row[cleanText('Ilość')])) * (Decimal(1) if k else Decimal(-1)),
                               self.stock(isin=isin, ticker=row['Papier'], exchange='WWA', currency='PLN'))
 
-                cost = Action(checksum(nr+'-cost'),
-                              time,
+                cost = Action(time,
                               EActionType.PAYMENT if k else EActionType.INCOME,
                               Decimal(fixNumber(row[cleanText('Wartość')])) * (Decimal(-1) if k else Decimal(1)),
                               self.currency('PLN'))
                 main.addAction(cost)
 
-                fee = Action(checksum(nr+'-fee'),
-                             time,
+                fee = Action(time,
                              EActionType.FEE,
                              Decimal(fixNumber(row[cleanText('Prowizja')]))*Decimal(-1),
                              self.currency('PLN'))

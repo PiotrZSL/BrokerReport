@@ -1,5 +1,5 @@
 from Account import Account
-from ImportUtils import getExcel, cleanText, checksum, fixNumber
+from ImportUtils import getExcel, cleanText, fixNumber
 from Action import Action, EActionType
 from decimal import Decimal
 from datetime import datetime
@@ -33,8 +33,7 @@ class DifAccount(Account):
                 outputCurency = row[5].value.split(' ', 1)[1]
 
                 if row[2].value == 'Depozyt zabezpieczający':
-                    main = Action(checksum(str(row[1].value)),
-                                  d,
+                    main = Action(d,
                                   EActionType.RECEIVE,
                                   inputValue,
                                   self.currency(inputCurency))
@@ -42,16 +41,14 @@ class DifAccount(Account):
                     self._add(main)
                     
                     if outputCurency != inputCurency:
-                        sub = Action(checksum(str(row[1].value)+"-convert"),
-                                     d,
+                        sub = Action(d,
                                      EActionType.SELL,
                                      inputValue*Decimal(-1),
                                      self.currency(inputCurency))
 
                         main.addAction(sub);
 
-                        sub.addAction(Action(checksum(str(row[1].value)+"-base"),
-                                            d,
+                        sub.addAction(Action(d,
                                             EActionType.BUY,
                                             outputValue,
                                             self.currency(outputCurency)))
@@ -59,8 +56,7 @@ class DifAccount(Account):
 
                 if cleanText(row[2].value) == cleanText('Wycofanie środków'):
                     
-                    main = Action(checksum(str(row[1].value)),
-                                  d,
+                    main = Action(d,
                                   EActionType.SEND if row[3].value != "Custody Fee" else EActionType.FEE,
                                   inputValue,
                                   self.currency(inputCurency))
@@ -89,16 +85,14 @@ class DifAccount(Account):
                 percent = Decimal(fixNumber(row[10].value))
 
                 afiat = row[2].value
-                main = Action(checksum(str(row)),
-                              d,
+                main = Action(d,
                               EActionType.DIVIDEND,
                               Decimal(fixNumber(row[7].value)),
                               self.stock(name=row[3].value, currency=fiat))
 
                 self._add(main)
 
-                main2 = Action(checksum(str(row)),
-                               d,
+                main2 = Action(d,
                                EActionType.INCOME,
                                value,
                                self.currency(fiat))
@@ -106,21 +100,20 @@ class DifAccount(Account):
                 main.addAction(main2)
                 
                 if afiat != fiat:
-                    s = Action(checksum(str(row)+'-sell'),
-                               d,
+                    s = Action(d,
                                EActionType.SELL,
                                value*Decimal(-1),
                                self.currency(fiat))
                     main2.addAction(s)
 
-                    s.addAction(Action(checksum(str(row)+'-buy'),
+                    s.addAction(Action(
                                 d,
                                 EActionType.BUY,
                                 Decimal(fixNumber(row[16].value)),
                                 self.currency(afiat)))
 
                 if not tax.is_zero():
-                    main2.addAction(Action(checksum(str(row)+'-tax'),
+                    main2.addAction(Action(
                                           d,
                                           EActionType.TAX,
                                           tax,
@@ -137,7 +130,6 @@ class DifAccount(Account):
 
             for idx in range(1, xls.nrows):
                 row = xls.row(idx)
-                tId = str(row[0].value)
                 name = row[2].value.split('(', 1)[0].strip()
                 isin = None if 'ISIN:' not in row[2].value else row[2].value.split('ISIN:', 1)[1].split(')')[0].strip()
                 ticker = row[11].value.split(':', 1)[0] if ':' in row[11].value else row[11].value
@@ -161,31 +153,27 @@ class DifAccount(Account):
 
                 if row[16].value == 'FxSpot':
 
-                    main = Action(checksum(tId),
-                                  d,
+                    main = Action(d,
                                   EActionType.FOREX,
                                   count,
                                   self.stock(None, ticker, ex, clientCurrency, name))
 
                     if not value.is_zero():
-                        main.addAction(Action(checksum(tId),
-                                       d,
+                        main.addAction(Action(d,
                                        EActionType.PAYMENT if k else EActionType.INCOME,
                                        blockedClient,
                                        self.currency(clientCurrency)))
                     self._add(main)
                     continue
 
-                main = Action(checksum(tId),
-                              d,
+                main = Action(d,
                               EActionType.BUY if k else EActionType.SELL,
                               count,
                               self.stock(isin, ticker, ex, clientCurrency, name))
 
                 self._add(main)
 
-                sub = Action(checksum(tId+"mn"),
-                             d,
+                sub = Action(d,
                              EActionType.SELL if k else EActionType.BUY,
                              value,
                              self.currency(clientCurrency))
@@ -194,8 +182,7 @@ class DifAccount(Account):
                 cost = blockedClient - value
 
                 if cost:
-                    sub2 = Action(checksum(tId+"cost"),
-                                  d,
+                    sub2 = Action(d,
                                   EActionType.FEE,
                                   cost,
                                   self.currency(clientCurrency))

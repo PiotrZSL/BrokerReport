@@ -12,6 +12,12 @@ class Asset:
     def __str__(self):
         return str(self.ticker)
 
+    def __eq__(self, other):
+        return type(self) == type(other) and self.ticker == other.ticker;
+
+    def __hash__(self):
+        return hash(type(self)) + hash(self.ticker)
+
 class Currency(Asset):
     def __init__(self, ticker, name):
         super().__init__(ticker, name)
@@ -22,6 +28,12 @@ class Stock(Asset):
         self.isin = isin
         self.exchange = exchange
         self.currency = currency
+    
+    def __eq__(self, other):
+        return type(self) == type(other) and self.ticker == other.ticker and self.exchange == other.exchange and self.currency == other.currency
+
+    def __hash__(self):
+        return hash(type(self)) + hash(self.ticker) + hash(self.exchange) + hash(self.currency)
     
     def __str__(self):
         return str(self.ticker) if not self.exchange else "%s.%s" % (str(self.ticker), self.exchange)

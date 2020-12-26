@@ -1,5 +1,5 @@
 from Account import Account
-from ImportUtils import getCsv, cleanText, checksum, fixNumber
+from ImportUtils import getCsv, cleanText, fixNumber
 from Action import Action, EActionType
 from decimal import Decimal
 from datetime import datetime
@@ -27,8 +27,7 @@ class ExanteAccount(Account):
 
                 k = row['Side'] == 'buy'
 
-                main = Action(checksum(row['Order Id']),
-                              time,
+                main = Action(time,
                               EActionType.BUY if k else EActionType.SELL,
                               Decimal(fixNumber(row['Quantity']))*(Decimal(1) if k else Decimal(-1)),
                               self.stock(None if row['ISIN'] == 'None' else row['ISIN'],
@@ -37,8 +36,7 @@ class ExanteAccount(Account):
                                          row['Currency']) if row['Type'] != 'FOREX' else self.currency(row['Symbol ID'].split('/')[0]))
                 self._add(main)
 
-                sub = Action(checksum(row['Order Id']),
-                             time,
+                sub = Action(time,
                              EActionType.PAYMENT if k else EActionType.INCOME,
                              Decimal(fixNumber(row['Traded Volume']))*(Decimal(-1) if k else Decimal(1)),
                              self.currency(row['Currency']))
@@ -48,8 +46,7 @@ class ExanteAccount(Account):
                 fee = Decimal(fixNumber(row['Commission']))
                 transation = []
                 if fee:
-                    main.addAction(Action(checksum(row['Order Id']),
-                                          time,
+                    main.addAction(Action(time,
                                           EActionType.FEE,
                                           fee*Decimal(-1),
                                           self.currency(row['Commission Currency'])))
@@ -103,8 +100,7 @@ class ExanteAccount(Account):
 
             if row['Operation type'] == 'FUNDING/WITHDRAWAL' or row['Operation type'] == 'SUBACCOUNT TRANSFER':
                 value = Decimal(fixNumber(row['Sum']))
-                main = Action(checksum(row['Transaction ID']),
-                              time,
+                main = Action(time,
                               EActionType.RECEIVE if value > Decimal(0) else EActionType.SEND,
                               value,
                               self.currency(row['Asset']))
@@ -118,16 +114,14 @@ class ExanteAccount(Account):
                 financial[0][2]['Symbol ID'] == 'None' and
                 financial[0][2]['When'] == row['When']):
 
-                main = Action(checksum(row['Transaction ID']),
-                              time,
+                main = Action(time,
                               EActionType.PAYMENT,
                               Decimal(fixNumber(row['Sum'])),
                               self.currency(row['Asset']))
 
                 row = financial[0][2]
                 del financial[0]
-                sub = Action(checksum(row['Transaction ID']),
-                             time,
+                sub = Action(time,
                              EActionType.BUY,
                              Decimal(fixNumber(row['Sum'])),
                              self.currency(row['Asset']))
@@ -141,8 +135,7 @@ class ExanteAccount(Account):
                 financial[0][2]['Symbol ID'] == symbol and
                 financial[0][2]['When'] == row['When']):
 
-                tax = Action(checksum(row['Transaction ID']),
-                             time,
+                tax = Action(time,
                              EActionType.TAX,
                              Decimal(fixNumber(row['Sum'])),
                              self.currency(row['Asset']),
@@ -151,14 +144,12 @@ class ExanteAccount(Account):
                 row = financial[0][2]
                 del financial[0]
 
-                main = Action(checksum(row['Transaction ID']),
-                              time,
+                main = Action(time,
                               EActionType.DIVIDEND,
                               Decimal(fixNumber(row['Comment'].split('shares', 1)[0].strip())),
                               self.stock(ticker=symbol.split('.', 1)[0], exchange=symbol.split('.', 1)[1], currency=row['Asset']))
 
-                income = Action(checksum(row['Transaction ID']),
-                                time,
+                income = Action(time,
                                 EActionType.INCOME,
                                 Decimal(fixNumber(row['Sum'])),
                                 self.currency(row['Asset']))
@@ -169,8 +160,7 @@ class ExanteAccount(Account):
                 continue
 
             if row['Operation type'] == 'DIVIDENT':
-                main = Action(checksum(row['Transaction ID']),
-                              time,
+                main = Action(time,
                               EActionType.DIVIDEND,
                               Decimal(fixNumber(row['Comment'].split('shares', 1)[0].strip())),
                               self.stock(ticker=symbol.split('.', 1)[0], exchange=symbol.split('.', 1)[1], currency=row['Asset']))

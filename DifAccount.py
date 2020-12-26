@@ -118,7 +118,7 @@ class DifAccount(Account):
                                 Decimal(fixNumber(row[16].value)),
                                 self.currency(afiat)))
 
-                if tax != Decimal(0):
+                if not tax.is_zero():
                     main2.addAction(Action(checksum(str(row)+'-tax'),
                                           d,
                                           EActionType.TAX,
@@ -165,7 +165,7 @@ class DifAccount(Account):
                                   count,
                                   self.stock(None, ticker, ex, clientCurrency, name))
 
-                    if value != Decimal(0):
+                    if not value.is_zero():
                         main.addAction(Action(checksum(tId),
                                        d,
                                        EActionType.PAYMENT if k else EActionType.INCOME,

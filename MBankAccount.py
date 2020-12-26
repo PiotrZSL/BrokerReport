@@ -187,7 +187,7 @@ class MBankAccount(Account):
             if stokcCurrency != currency:
                 sub = Action(checksum(crc),
                              time,
-                             EActionType.SELL if k else EActionType.BUY,
+                             EActionType.PAYMENT if k else EActionType.INCOME,
                              value * count * (Decimal(-1) if k else Decimal(1)),
                              self.currency(stokcCurrency))
 
@@ -200,15 +200,22 @@ class MBankAccount(Account):
                               self.currency(stokcCurrency))
 
                 sub.addAction(sub2)
-                main = sub2
 
-            sub3 = Action(checksum(crc),
-                          time,
-                          EActionType.SELL if k else EActionType.BUY,
-                          sumValue * (Decimal(-1) if k else Decimal(1)),
-                          self.currency(currency))
+                sub3 = Action(checksum(crc),
+                              time,
+                              EActionType.SELL if k else EActionType.BUY,
+                              sumValue * (Decimal(-1) if k else Decimal(1)),
+                              self.currency(currency))
 
-            main.addAction(sub3)
+                sub.addAction(sub3)
+            else:
+                sub = Action(checksum(crc),
+                              time,
+                              EActionType.PAYMENT if k else EActionType.INCOME,
+                              sumValue * (Decimal(-1) if k else Decimal(1)),
+                              self.currency(currency))
+
+                main.addAction(sub)
 
         if orders:
             raise Exception('Not all orders consumed: %s' % (str(orders)))

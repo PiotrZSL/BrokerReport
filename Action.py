@@ -12,6 +12,7 @@ class EActionType(Enum):
     FOREX = 8
     PAYMENT = 9
     INCOME = 10
+    TAX_PENDING = 11
 
 class Action:
     def __init__(self, actionId, time, actionType, count, asset):
@@ -59,3 +60,13 @@ class Action:
         print('%s%s - %s %s %s %s' % (prefix, self._actionId, self._time, self._actionType.name, self._count, self._asset))
         for x in self._actions:
             x.dump(prefix+'\t')
+
+
+class TaxAction(Action):
+    def __init__(self, actionId, year, time, actionType, count, asset):
+        super().__init__(actionId, time, time, count, asset)
+        self._year = year
+
+    @property
+    def year(self):
+        return self._year

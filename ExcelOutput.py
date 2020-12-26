@@ -31,7 +31,7 @@ class ExcelOutput:
         formats[1].set_indent(level)
 
         worksheet.write_datetime(nrow, 0, action.time, formats[0])
-        worksheet.write_string(nrow, 1, action.asset.ticker, formats[1])
+        worksheet.write_string(nrow, 1, str(action.asset), formats[1])
         worksheet.write_string(nrow, 2, action.asset.name if action.asset.name else action.asset.ticker, formats[2])
         worksheet.write_string(nrow, 3, action.type.name, formats[3])
         worksheet.write_number(nrow, 4, action.count, formats[4])

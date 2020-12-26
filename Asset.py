@@ -22,11 +22,15 @@ class Stock(Asset):
         self.isin = isin
         self.exchange = exchange
         self.currency = currency
+    
+    def __str__(self):
+        return str(self.ticker) if not self.exchange else "%s.%s" % (str(self.ticker), self.exchange)
 
 class AssetDatabase:
     def __init__(self):
         self._currency = {}
         self._stocks = []
+        self._changes = {}
 
     def getCurrency(self, ticker):
         if ticker in self._currency:
@@ -44,14 +48,22 @@ class AssetDatabase:
         return c
 
     def getStock(self, isin = None, ticker = None, exchange = None, currency = None, name = None):
+        t = ticker
+        e = exchange
+
+        while t and e and (t, e) in self._changes:
+            w = self._changes[(t, e)]
+            t = w[0]
+            e = w[0]
+
         for s in self._stocks:
             if isin and s.isin and s.isin != isin:
                 continue
 
-            if ticker and s.ticker and s.ticker != ticker:
+            if t and s.ticker and s.ticker != t:
                 continue
 
-            if exchange and s.exchange and exchange != s.exchange:
+            if e and s.exchange and e != s.exchange:
                 continue
 
             if currency and s.currency and currency != s.currency:
@@ -63,11 +75,11 @@ class AssetDatabase:
             if isin and not s.isin:
                 s.isin = isin
 
-            if ticker and not s.ticker:
-                s.ticker = ticker
+            if t and not s.ticker:
+                s.ticker = t
 
-            if exchange and not s.exchange:
-                s.exchange = exchange
+            if e and not s.exchange:
+                s.exchange = e
 
             if currency and not s.currency:
                 s.currency = currency
@@ -81,10 +93,12 @@ class AssetDatabase:
         self._stocks.append(s)
         return s
 
-    def changeExchange(oldTicker, oldExchange, newTicker, newExchange):
+    def changeName(self, oldTicker, oldExchange, newTicker, newExchange):
         for x in self._stocks:
             if x.ticker == oldTicker and x.exchange:
                 x.ticker = newTicker
                 x.exchange = newExchange
-                return
+                break
+
+        self._changes[(oldTicker, oldExchange)] = (newTicker, newExchange)
 

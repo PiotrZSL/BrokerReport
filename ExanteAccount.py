@@ -70,5 +70,10 @@ class ExanteAccount(Account):
             for row in reversed(csv):
                 d = [int(x) for x in row['Time'].replace('-', ' ').replace(':', ' ').split(' ')]
                 time = datetime(d[0], d[1], d[2], d[3], d[4], d[5])
+                
+                financial.append((time, row))
+
+        financial.sort(key=lambda x: x[0])
+        print(financial)
 
 

@@ -1,5 +1,7 @@
 from enum import Enum
 from sortedcontainers import SortedList
+from collections import defaultdict
+from decimal import Decimal
 
 class EActionType(Enum):
     SEND = 1
@@ -43,6 +45,21 @@ class Action:
     @property
     def parent(self):
         return self._parent
+
+    @property
+    def tax_calculations(self):
+        return self._taxCalculations
+
+    @property
+    def tax(self):
+        result = defaultdict(lambda : [Decimal(0), Decimal(0)])
+        for action, value in self._taxCalculations:
+            action.time.year
+            if value >= Decimal(0):
+                result[action.time.year][1] += value
+            else:
+                result[action.time.year][0] += value
+        return result
 
     @property
     def flat_actions(self):

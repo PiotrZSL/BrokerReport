@@ -55,9 +55,9 @@ for broker in os.listdir(args.reports_folder):
                 raise e
 
 for x in accounts:
-    x.dump()
+    TaxCalculator(x).calculate()
 
 for x in accounts:
-    TaxCalculator(x).calculate()
+    x.dump()
 
 ExcelOutput(args.output_xls, accounts).save()

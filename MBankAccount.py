@@ -191,7 +191,7 @@ class MBankAccount(Account):
                               sumValue * (Decimal(-1) if k else Decimal(1)),
                               self.currency(currency))
 
-                sub.addAction(sub3)
+                sub2.addAction(sub3)
             else:
                 sub = Action(time,
                              EActionType.PAYMENT if k else EActionType.INCOME,

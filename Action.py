@@ -15,12 +15,13 @@ class EActionType(Enum):
     TAX_PENDING = 11
 
 class Action:
-    def __init__(self, actionId, time, actionType, count, asset):
+    def __init__(self, actionId, time, actionType, count, asset, percent = None):
         self._actionId = actionId
         self._time = time
         self._actionType = actionType
         self._count = count
         self._asset = asset
+        self._percent = percent
         self._parent = None
         self._actions = SortedList(key=lambda x : x.time)
 
@@ -52,15 +53,19 @@ class Action:
     def actions(self):
         return self._actions
 
+    @property
+    def percent(self):
+        return self._percent
+
     def addAction(self, action):
         action._parent = self
         self._actions.add(action)
     
     def dump(self, prefix = ''):
-        print('%s%s - %s %s %s %s' % (prefix, self._actionId, self._time, self._actionType.name, self._count, self._asset))
+        p = '' if not self._percent else "(%s %%)" % (str(self._percent))
+        print('%s%s - %s %s %s %s %s' % (prefix, self._actionId, self._time, self._actionType.name, self._count, self._asset, p))
         for x in self._actions:
             x.dump(prefix+'\t')
-
 
 class TaxAction(Action):
     def __init__(self, actionId, year, time, actionType, count, asset):

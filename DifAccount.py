@@ -86,6 +86,7 @@ class DifAccount(Account):
                     raise Exception('Dividend with difrent tax currency not supported: %s' % (str(row)))
 
                 tax = Decimal(fixNumber(row[11].value.replace(fiat, '')))
+                percent = Decimal(fixNumber(row[10].value))
 
                 afiat = row[2].value
                 main = Action(checksum(str(row)),
@@ -123,7 +124,8 @@ class DifAccount(Account):
                                           d,
                                           EActionType.TAX,
                                           tax,
-                                          self.currency(fiat)))
+                                          self.currency(fiat),
+                                          percent))
 
     def __importTransations(self, folder):
         for name in os.listdir(folder):

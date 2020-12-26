@@ -145,7 +145,8 @@ class ExanteAccount(Account):
                              time,
                              EActionType.TAX,
                              Decimal(fixNumber(row['Sum'])),
-                             self.currency(row['Asset']))
+                             self.currency(row['Asset']),
+                             Decimal(fixNumber(financial[0][2]['Comment'].split('(')[-1].split('%)', 1)[0])))
 
                 row = financial[0][2]
                 del financial[0]

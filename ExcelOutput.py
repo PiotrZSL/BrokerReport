@@ -103,7 +103,26 @@ class ExcelOutput:
                 {'header':'Income', 'header_format': center_format}]})
             worksheet.write_row(row, column, sum_tax[year], total_format)
             column += 3
+        
+       
+        if [x for x in account.actions if x.type == EActionType.DIVIDEND]:
+            row += 3
+            nrow = row
+            worksheet.merge_range(row-1, 0, row-1, 4, "Dividends", title)
+            sum_tax = defaultdict(lambda : [Decimal(0), Decimal(0)])
+            row += 1
+            for action in  account.actions:
+                if action.type != EActionType.DIVIDEND:
+                    continue
+                row = self.__visitAction(years, worksheet, row, 0, action)
+                for year, value in action.flat_tax.items():
+                    sum_tax[year][0] += value[0]
+                    sum_tax[year][1] += value[1]
 
-
+            worksheet.add_table(nrow, 0, row-1, 4, {'columns': [{'header':'Date', 'header_format': center_format},
+                                                                {'header':'Ticker'},
+                                                                {'header':'Name'},
+                                                                {'header':'Action', 'header_format': center_format},
+                                                                {'header': 'Value', 'header_format': center_format}]})
 
 

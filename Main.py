@@ -3,17 +3,19 @@ from MBankAccount import MBankAccount
 from DifAccount import DifAccount
 from ExanteAccount import ExanteAccount
 from ExcelOutput import ExcelOutput
+from Cache import loadCache, saveCache
 
 from TaxCalculator import TaxCalculator
 
 import argparse, os, os.path
 
 parser = argparse.ArgumentParser(description='Makler Reports Processor')
-parser.add_argument('--cache-file', required=False, help='location of cache file used to reduce network usage')
+parser.add_argument('--cache-file', required=False, help='location of optional cache file used to reduce network usage')
 parser.add_argument('--reports-folder', required=True, help='location of folder with reports to import, folder should contain `broker/account_name` folders with required reports in it')
 parser.add_argument('--output-xls', required=True, help='output location of cumulative excel report to generate')
 
 args = parser.parse_args()
+loadCache(args.cache_file)
 
 accounts = []
 for broker in os.listdir(args.reports_folder):
@@ -61,3 +63,5 @@ for x in accounts:
     x.dump()
 
 ExcelOutput(args.output_xls, accounts).save()
+
+saveCache(args.cache_file)

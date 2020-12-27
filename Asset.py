@@ -1,4 +1,3 @@
-from decimal import Decimal
 from enum import Enum
 import pycountry
 import gettext

@@ -1,7 +1,6 @@
 from datetime import date, datetime, timedelta
 import xlrd
 import csv
-import json
 import binascii
 
 def fixNumber(string):

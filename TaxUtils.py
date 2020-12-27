@@ -22,6 +22,6 @@ def getNBPValue(value, curency, time):
             CACHE['NBP'][(curency, time)] = data
             CACHE['NBP'][(curency, ntime)] = data
             return data * value
-        except Exception as e:
+        except:
             d = date.fromisoformat(ntime) - timedelta(days = 1)
             ntime = d.isoformat()

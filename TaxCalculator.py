@@ -45,6 +45,13 @@ class TaxCalculator:
         for pln, act in [ (getNBPValue(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions ]:
             act.addTaxCalculation(action, pln)
 
+    def visitInstant(self, action):
+        if not action.actions and type(action.asset) is not Currency:
+            return
+        actions = [x for x in action.flat_actions if not x.actions] if action.actions else [action]
+        for pln, act in [ (getNBPValue(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions ]:
+            act.addTaxCalculation(action, pln)
+
     def calculate(self):
         for action in self._actions:
             if action.type == EActionType.BUY:
@@ -53,5 +60,9 @@ class TaxCalculator:
             
             if action.type == EActionType.SELL:
                 self.visitSell(action)
+                continue
+
+            if action.type == EActionType.FEE or action.type == EActionType.FOREX:
+                self.visitInstant(action)
                 continue
 

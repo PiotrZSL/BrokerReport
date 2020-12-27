@@ -158,7 +158,7 @@ class DifAccount(Account):
                                   count,
                                   self.stock(None, ticker, ex, clientCurrency, name))
 
-                    if not value.is_zero():
+                    if not blockedClient.is_zero():
                         main.addAction(Action(d,
                                        EActionType.PAYMENT if k else EActionType.INCOME,
                                        blockedClient,

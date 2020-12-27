@@ -62,6 +62,23 @@ class Action:
         return result
 
     @property
+    def flat_tax(self):
+        result = defaultdict(lambda : [Decimal(0), Decimal(0)])
+        for x in self._actions:
+            sub = x.flat_tax
+            for year, value in sub.items():
+                result[year][0] += value[0]
+                result[year][1] += value[1]
+
+        for action, value in self._taxCalculations:
+            action.time.year
+            if value >= Decimal(0):
+                result[action.time.year][1] += value
+            else:
+                result[action.time.year][0] += value
+        return result
+
+    @property
     def flat_actions(self):
         actions = []
         stack = [ x for x in self._actions ]

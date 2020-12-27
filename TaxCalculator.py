@@ -52,6 +52,23 @@ class TaxCalculator:
         for pln, act in [ (getNBPValue(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions ]:
             act.addTaxCalculation(action, pln)
 
+    def visitDividend(self, action):
+        tax = [x for x in action.flat_actions if x.type == EActionType.TAX]
+        precent = Decimal(0)
+        income = [x for x in action.flat_actions if x.type == EActionType.INCOME][0]
+        if tax and income and tax[0].asset != income.asset:
+            raise Exception("Diffrent TAX & INCOME currences in dividends")
+
+        if tax:
+            precent = min(tax[0].percent if tax[0].percent else (tax[0].count*Decimal(-1)) / income.count * Decimal(100), Decimal(19.0))/Decimal(100)
+
+        incomeValue = getNBPValue(income.count, income.asset.ticker, income.time.date().isoformat())
+        taxValue = getNBPValue(income.count*precent, income.asset.ticker, income.time.date().isoformat())
+
+        if not taxValue.is_zero() and tax:
+            tax[0].addTaxCalculation(action, taxValue*Decimal(-1))
+        income.addTaxCalculation(action, incomeValue*Decimal(0.19))
+
     def calculate(self):
         for action in self._actions:
             if action.type == EActionType.BUY:
@@ -66,3 +83,6 @@ class TaxCalculator:
                 self.visitInstant(action)
                 continue
 
+            if action.type == EActionType.DIVIDEND:
+                self.visitDividend(action)
+                continue

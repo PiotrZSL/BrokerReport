@@ -62,7 +62,7 @@ class ExcelOutput:
         return nrow
 
     def createAccountTab(self, account):
-        years = list(reversed(sorted(list(set([x.time.year for x in account.actions])))))
+        years = list(reversed(sorted(list(set([x.time.year for x in account.actions if x.type != EActionType.DIVIDEND])))))
         worksheet = self._excel.add_worksheet("%s - %s" % (account.broker,  account.name))
         worksheet.set_column(0, 0, 15)
         worksheet.set_column(1, 1, 20)
@@ -124,5 +124,15 @@ class ExcelOutput:
                                                                 {'header':'Name'},
                                                                 {'header':'Action', 'header_format': center_format},
                                                                 {'header': 'Value', 'header_format': center_format}]})
-
+            worksheet.write_row(row, 0, ['','','','',''], total_format)
+            column = 6
+            for year in years:
+                worksheet.set_column(column-1, column-1, 5)
+                worksheet.set_column(column, column+1, 10)
+                worksheet.merge_range(nrow-1, column, nrow-1, column+1, year, title)
+                worksheet.add_table(nrow, column, row-1, column+1, {'columns': [
+                    {'header':'Paid', 'header_format': center_format},
+                    {'header':'19%', 'header_format': center_format}]})
+                worksheet.write_row(row, column, sum_tax[year], total_format)
+                column += 3
 

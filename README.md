@@ -2,9 +2,35 @@
 
 Cel tego projektu to stworzyć skrypt który by importował raporty inwestycyjne z Exante, Dif Broker, mBank, ING i wyliczał zyski i straty potrzebne do rozliczenia z fiskusem w Polsce. Skrypt jest eksperymentalny, i wszelkie dane które wypluje powinny być sprawdzone przez "niezależnych ekspertów". Autor nie bierze odpowiedzialności za nic. Używasz na własne ryzysko.
 
+## Uruchomienie
+
+Przykład uruchomienia:
+```
+python3 Main.py  --reports-folder /nas/Makler/ --output-xls file.xlsx --cache-file cache.pickle
+```
+
+Help:
+```
+usage: Main.py [-h] [--cache-file CACHE_FILE] --reports-folder REPORTS_FOLDER --output-xls OUTPUT_XLS
+
+Makler Reports Processor
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --cache-file CACHE_FILE
+                        location of optional cache file used to reduce network usage
+  --reports-folder REPORTS_FOLDER
+                        location of folder with reports to import, folder should contain `broker/account_name` folders with required reports in it
+  --output-xls OUTPUT_XLS
+                        output location of cumulative excel report to generate
+```
+
+Skrypty mogą wymagac doinstalowania brakujących pakietów przez `pip3`.
+
 ## Import Danych
 Skrypt na wejście bierze folder który ma strukturę:
 
+```
 Input Directory
  - DIF
    - ACCOUNT1
@@ -22,6 +48,7 @@ Input Directory
    - ACCOUNT7
    - ACCOUNT8
    - ...
+```
 
 Nazwy kont mogą być dowolne.
 

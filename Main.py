@@ -19,10 +19,18 @@ loadCache(args.cache_file)
 
 accounts = []
 for broker in os.listdir(args.reports_folder):
+    if not os.path.isdir(os.path.join(args.reports_folder, broker)):
+        continue
+
     for account in os.listdir(os.path.join(args.reports_folder, broker)):
+
+        directory = os.path.join(args.reports_folder, broker, account)
+        if not os.path.isdir(directory):
+            continue
+        
         if 'ING' == broker:
             try:
-                accounts.append(IngAccount(account, os.path.join(args.reports_folder, broker, account)))
+                accounts.append(IngAccount(account, directory))
                 print(" - imported %s/%s" % (broker, account), flush=True)
                 continue
             except Exception as e:
@@ -31,7 +39,7 @@ for broker in os.listdir(args.reports_folder):
 
         if 'MBANK' == broker:
             try:
-                accounts.append(MBankAccount(account, os.path.join(args.reports_folder, broker, account)))
+                accounts.append(MBankAccount(account, directory))
                 print(" - imported %s/%s" % (broker, account), flush=True)
                 continue
             except Exception as e:
@@ -40,7 +48,7 @@ for broker in os.listdir(args.reports_folder):
         
         if 'DIF' == broker:
             try:
-                accounts.append(DifAccount(account, os.path.join(args.reports_folder, broker, account)))
+                accounts.append(DifAccount(account, directory))
                 print(" - imported %s/%s" % (broker, account), flush=True)
                 continue
             except Exception as e:
@@ -49,7 +57,7 @@ for broker in os.listdir(args.reports_folder):
         
         if 'EXANTE' == broker:
             try:
-                accounts.append(ExanteAccount(account, os.path.join(args.reports_folder, broker, account)))
+                accounts.append(ExanteAccount(account, directory))
                 print(" - imported %s/%s" % (broker, account), flush=True)
                 continue
             except Exception as e:

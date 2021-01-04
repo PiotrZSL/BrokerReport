@@ -159,7 +159,6 @@ Uwagi:
  - Dodanie wspracia dla abonamentów w Dif i innych brakujących pozycji
  - Dodanie widoku transakcji z info ile straciliśmy/zarobiliśmy na pozycji
  - Dodanie aktualną wycenę walorów
- - Dodanie wsparcie dla "custom" brokera - tak gybyśmy chcieli wpisywac sobie np. zakupy metali szlachetnych
  - ...
 
 

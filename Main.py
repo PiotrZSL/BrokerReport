@@ -2,6 +2,7 @@ from IngAccount import IngAccount
 from MBankAccount import MBankAccount
 from DifAccount import DifAccount
 from ExanteAccount import ExanteAccount
+from CustomAccount import CustomAccount
 from ExcelOutput import ExcelOutput
 from Cache import loadCache, saveCache
 
@@ -58,6 +59,15 @@ for broker in os.listdir(args.reports_folder):
         if 'EXANTE' == broker:
             try:
                 accounts.append(ExanteAccount(account, directory))
+                print(" - imported %s/%s" % (broker, account), flush=True)
+                continue
+            except Exception as e:
+                print(" - failed to import %s/%s - %s" % (broker, account, e), flush=True)
+                raise e
+        
+        if 'CUSTOM' == broker:
+            try:
+                accounts.append(CustomAccount(account, directory))
                 print(" - imported %s/%s" % (broker, account), flush=True)
                 continue
             except Exception as e:

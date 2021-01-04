@@ -124,6 +124,20 @@ Uwagi:
  - Nie testowano dywidend w innej walucie niż waluta rachunku
  - Nie testowano jeszcze transakcji forex
 
+### Custom
+
+Broker pozwalający wprowadzac dowolne dane, np. operacje na metalach szlachetnych. Wspierane operacje to Buy, Sell, Transfer
+Tworzymy excel z kolumnami:
+ - Data (DD.MM.YYYY)
+ - Ticker
+ - Operacja
+ - Ilość
+ - Cena (za wszystko)
+ - Waluta 
+ - Opłata (Fee)
+ - Waluta Fee
+
+
 ## Liczenie podatku
 Ogólnie w przypadku mBank/ING jest to trochę zbędne, bo tam mamy PIT-8C. W przypadku Exante/Dif podatek jest liczony eksperymentalnie.
 

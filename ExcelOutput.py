@@ -61,6 +61,26 @@ class ExcelOutput:
         worksheet.set_row(row, None, None, {'level': level, 'collapsed': level != 0, 'hidden': level != 0})
         return nrow
 
+    def __visitAsset(self, worksheet, row, asset, count, time):
+        formats = [ self._excel.add_format({'font_color': 'black', 'bold' : False, 'num_format': 'yyyy-mm-dd'}),
+                    self._excel.add_format({'font_color': 'black', 'bold' : False}),
+                    self._excel.add_format({'font_color': 'black', 'bold' : False}),
+                    self._excel.add_format({'font_color': 'black', 'bold' : False}),
+                    self._excel.add_format({'font_color': 'black', 'bold' : False, 'num_format': '#,##0.00'})]
+
+        for x in formats:
+            x.set_align('vcenter')
+        formats[0].set_align('center')
+        formats[3].set_align('center')
+
+        worksheet.write_datetime(row, 0, time, formats[0])
+        worksheet.write_string(row, 1, str(asset), formats[1])
+        worksheet.write_string(row, 2, asset.name if asset.name else asset.ticker, formats[2])
+        worksheet.write_string(row, 3, asset.type, formats[3])
+        worksheet.write_number(row, 4, count, formats[4])
+
+        return row + 1
+
     def createAccountTab(self, account):
         years = list(reversed(sorted(list(set([x.time.year for x in account.actions if x.type != EActionType.DIVIDEND])))))
         worksheet = self._excel.add_worksheet("%s - %s" % (account.broker,  account.name))
@@ -136,3 +156,17 @@ class ExcelOutput:
                 worksheet.write_row(row, column, sum_tax[year], total_format)
                 column += 3
 
+        assets = account.assets
+        if assets:
+            row += 3
+            nrow  = row
+            worksheet.merge_range(row-1, 0, row-1, 4, "Assets", title)
+            row += 1
+            for asset, value, time in assets:
+                row = self.__visitAsset(worksheet, row, asset, value, time)
+            worksheet.add_table(nrow, 0, row-1, 4, {'columns': [{'header':'Last Change', 'header_format': center_format},
+                                                                {'header':'Ticker'},
+                                                                {'header':'Name'},
+                                                                {'header':'Type', 'header_format': center_format},
+                                                                {'header':'Count', 'header_format': center_format}]})
+            worksheet.write_row(row, 0, ['','','','',''], total_format)

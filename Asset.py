@@ -21,12 +21,20 @@ class Currency(Asset):
     def __init__(self, ticker, name):
         super().__init__(ticker, name)
 
+    @property
+    def type(self):
+        return "Currency"
+
 class Stock(Asset):
     def __init__(self, isin, ticker, exchange, currency, name):
         super().__init__(ticker, name)
         self.isin = isin
         self.exchange = exchange
         self.currency = currency
+    
+    @property
+    def type(self):
+        return "Stock"
     
     def __eq__(self, other):
         return type(self) == type(other) and self.ticker == other.ticker and self.exchange == other.exchange and self.currency == other.currency

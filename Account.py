@@ -1,4 +1,7 @@
 from sortedcontainers import SortedList
+from collections import defaultdict
+from decimal import Decimal
+from Action import EActionType
 from Asset import *
 
 class Account:
@@ -33,3 +36,15 @@ class Account:
     
     def _add(self, action):
         self._actions.add(action)
+
+    @property
+    def assets(self):
+        result = defaultdict(lambda : [Decimal(0), None])
+        actions = sum([[x] + x.flat_actions for x in self._actions], []) 
+        for action in actions:
+            if action.type != EActionType.DIVIDEND:
+                result[action.asset][0] += action.count
+                result[action.asset][1] = action.time
+        result = [(x, y[0], y[1]) for x, y in result.items() if not y[0].is_zero()]
+        result.sort(key=lambda x : (x[0].type, x[2]))
+        return result

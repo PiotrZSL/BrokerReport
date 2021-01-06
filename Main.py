@@ -14,10 +14,12 @@ parser = argparse.ArgumentParser(description='Makler Reports Processor')
 parser.add_argument('--cache-file', required=False, help='location of optional cache file used to reduce network usage')
 parser.add_argument('--reports-folder', required=True, help='location of folder with reports to import, folder should contain `broker/account_name` folders with required reports in it')
 parser.add_argument('--output-xls', required=True, help='output location of cumulative excel report to generate')
+parser.add_argument('-v', '--verbose', required=False, help='Shows more detailed output', action="store_true")
 
 args = parser.parse_args()
 loadCache(args.cache_file)
 
+print("\nImporting & processing reports", flush=True)
 accounts = []
 for broker in os.listdir(args.reports_folder):
     if not os.path.isdir(os.path.join(args.reports_folder, broker)):
@@ -77,9 +79,11 @@ for broker in os.listdir(args.reports_folder):
 for x in accounts:
     TaxCalculator(x).calculate()
 
-for x in accounts:
-    x.dump()
+if args.verbose:
+    for x in accounts:
+        x.dump()
 
 ExcelOutput(args.output_xls, accounts).save()
-
+print("Saved %s" % (args.output_xls), flush=True)
 saveCache(args.cache_file)
+print("Finished...\n", flush=True)

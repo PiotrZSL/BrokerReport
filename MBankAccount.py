@@ -121,6 +121,13 @@ class MBankAccount(Account):
                     # + money
                     orders.append((time, kwota, row['Opis'].split('PW:', 1)[1].strip()))
                     continue
+                if row['Typ operacji'] == cleanText('Obciążenia') and row['Opis'] == cleanText('opłata za prowadzenie rachunku'):
+                    main = Action(time,
+                                  EActionType.FEE,
+                                  kwota,
+                                  self.currency('PLN'))
+                    self._add(main)
+                    continue
 
                 raise Exception('Unsupported record: %s' % (row))
 

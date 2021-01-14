@@ -153,7 +153,6 @@ Uwagi:
  - Dokładniejsze rozbicie transakcji forex
  - Testy, testy, testy
  - Liczenie podatku w oparciu o pozycje dla Dif a nie FIFO
- - Dodanie kolejnej tabelki z aktualnym stanem konta (w celu weryfikacji)
  - Dodanie zakładki "Summary" z listą danych i info w które pola w PIT-38 powinny byc wpisane
  - Dodanie pełnych nazw akcji
  - Dodanie wspracia dla abonamentów w Dif i innych brakujących pozycji

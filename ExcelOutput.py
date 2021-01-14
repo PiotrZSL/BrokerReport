@@ -83,17 +83,24 @@ class ExcelOutput:
 
     def createAccountTab(self, account):
         years = list(reversed(sorted(list(set([x.time.year for x in account.actions if x.type != EActionType.DIVIDEND])))))
-        worksheet = self._excel.add_worksheet("%s - %s" % (account.broker,  account.name))
+        worksheet_name = "%s - %s" % (account.broker,  account.name)
+        worksheet = self._excel.add_worksheet(worksheet_name)
         worksheet.set_column(0, 0, 15)
         worksheet.set_column(1, 1, 20)
         worksheet.set_column(2, 2, 40)
         worksheet.set_column(3, 4, 15)
         worksheet.outline_settings(True, False, False, True)
 
+        menu_column = 0
+        row = 2
+
         title = self._excel.add_format({'font_color': 'blue', 'bold' : True})
         title.set_align('center')
-        worksheet.merge_range(0, 0, 0, 4, "History", title)
-        row = 2
+        worksheet.merge_range(row, 0, row, 4, "History", title)
+        worksheet.write_url(0, menu_column, "internal:'%s'!A%d" % (worksheet_name, row+1), string="History")
+        nrow = row+1
+        menu_column += 1
+        row += 2
         sum_tax = defaultdict(lambda : [Decimal(0), Decimal(0)]) 
         for action in  account.actions:
             if action.type == EActionType.DIVIDEND:
@@ -105,7 +112,7 @@ class ExcelOutput:
 
         center_format = self._excel.add_format()
         center_format.set_align('center')
-        worksheet.add_table(1, 0, row-1, 4, {'columns': [{'header':'Date', 'header_format': center_format},
+        worksheet.add_table(nrow, 0, row-1, 4, {'columns': [{'header':'Date', 'header_format': center_format},
                                                          {'header':'Ticker'},
                                                          {'header':'Name'},
                                                          {'header':'Action', 'header_format': center_format},
@@ -117,8 +124,8 @@ class ExcelOutput:
         for year in years:
             worksheet.set_column(column-1, column-1, 5)
             worksheet.set_column(column, column+1, 10)
-            worksheet.merge_range(0, column, 0, column+1, year, title)
-            worksheet.add_table(1, column, row-1, column+1, {'columns': [
+            worksheet.merge_range(nrow-1, column, nrow-1, column+1, year, title)
+            worksheet.add_table(nrow, column, row-1, column+1, {'columns': [
                 {'header':'Cost', 'header_format': center_format},
                 {'header':'Income', 'header_format': center_format}]})
             worksheet.write_row(row, column, sum_tax[year], total_format)
@@ -129,6 +136,8 @@ class ExcelOutput:
             row += 3
             nrow = row
             worksheet.merge_range(row-1, 0, row-1, 4, "Dividends", title)
+            worksheet.write_url(0, menu_column, "internal:'%s'!A%d" % (worksheet_name, row), string="Dividends")
+            menu_column += 1
             sum_tax = defaultdict(lambda : [Decimal(0), Decimal(0)])
             row += 1
             for action in  account.actions:
@@ -161,6 +170,8 @@ class ExcelOutput:
             row += 3
             nrow  = row
             worksheet.merge_range(row-1, 0, row-1, 4, "Assets", title)
+            worksheet.write_url(0, menu_column, "internal:'%s'!A%d" % (worksheet_name, row), string="Assets")
+            menu_column += 1
             row += 1
             for asset, value, time in assets:
                 row = self.__visitAsset(worksheet, row, asset, value, time)

@@ -180,6 +180,55 @@ class ExanteAccount(Account):
                                         symbol.split('.', 1)[1])
                 del financial[0]
                 continue
+            
+            if (row['Operation type'] == 'STOCK SPLIT' and
+                "Stock Split " in row['Comment'] and
+                len(financial) > 1 and
+                financial[0][2]['Operation type'] == 'STOCK SPLIT' and
+                financial[0][2]['Comment'] == row['Comment'] and
+                financial[0][2]['Asset'] == row['Asset'] and
+                financial[1][2]['Operation type'] == 'STOCK SPLIT' and
+                financial[1][2]['Asset'] != row['Asset'] and
+                financial[1][2]['Comment'] == row['Comment']+"/ Fractional Share Payment"):
+
+                split = row['Comment'].replace('Stock Split ','').split(" for ", 1)
+                sold = Decimal(int(row['Sum']) + int(financial[0][2]['Sum']) * int(split[1]))
+                split = Decimal(split[0]) / Decimal(split[1])
+                asset = self.stock(ticker=symbol.split('.', 1)[0], exchange=symbol.split('.', 1)[1], currency=financial[1][2]['Asset'])
+
+                main = Action(financial[1][0],
+                              EActionType.SELL,
+                              sold,
+                              asset)
+                income = Action(financial[1][0],
+                                EActionType.INCOME,
+                                Decimal(fixNumber(financial[1][2]['Sum'])),
+                                self.currency(financial[1][2]['Asset']))
+
+                income.addAction(tax)
+                main.addAction(income)
+                self._add(main)
+                self._split(asset, financial[1][0], split)
+                del financial[0]
+                del financial[0]
+                
+                continue
+            
+            if (row['Operation type'] == 'STOCK SPLIT' and
+                "Stock Split " in row['Comment'] and
+                financial and
+                financial[0][2]['Operation type'] == 'STOCK SPLIT' and
+                financial[0][2]['Comment'] == row['Comment'] and
+                financial[0][2]['Asset'] == row['Asset']):
+
+                split = row['Comment'].replace('Stock Split ','').split(" for ", 1)
+                split = Decimal(split[0]) / Decimal(split[1])
+                asset = self.stock(ticker=symbol.split('.', 1)[0], exchange=symbol.split('.', 1)[1])
+
+                self._split(asset, time, split)
+                del financial[0]
+                continue
+
 
             raise Exception("Not suported row: %s" % (str(row)))
 

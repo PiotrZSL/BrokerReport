@@ -48,3 +48,8 @@ class Account:
         result = [(x, y[0], y[1]) for x, y in result.items() if not y[0].is_zero()]
         result.sort(key=lambda x : (x[0].type, x[2]))
         return result
+
+    def _split(self, asset, date, value):
+        for x in self._actions:
+            if x.asset == asset and x.time <= date:
+                x.split(value)

@@ -50,6 +50,9 @@ class Action:
     def tax_calculations(self):
         return self._taxCalculations
 
+    def split(self, value):
+        self._count *= value
+
     @property
     def tax(self):
         result = defaultdict(lambda : [Decimal(0), Decimal(0)])

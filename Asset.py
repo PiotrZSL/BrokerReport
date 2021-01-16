@@ -1,7 +1,7 @@
 from enum import Enum
+from Exchanges import findExchange
 import pycountry
 import gettext
-
 
 class Asset:
     def __init__(self, ticker, name):
@@ -51,6 +51,11 @@ class AssetDatabase:
         self._stocks = []
         self._changes = {}
 
+    def updateExchange(self):
+        for x in self._stocks:
+            if x.exchange:
+                x.exchange = findExchange(x.exchange)
+
     def getCurrency(self, ticker):
         if ticker in self._currency:
             return self._currency[ticker]
@@ -73,7 +78,7 @@ class AssetDatabase:
         while t and e and (t, e) in self._changes:
             w = self._changes[(t, e)]
             t = w[0]
-            e = w[0]
+            e = w[1]
 
         for s in self._stocks:
             if isin and s.isin and s.isin != isin:
@@ -108,16 +113,19 @@ class AssetDatabase:
 
             return s
 
-        s = Stock(isin, ticker, exchange, currency, name)
+        s = Stock(isin, ticker, e, currency, name)
         self._stocks.append(s)
         return s
 
     def changeName(self, oldTicker, oldExchange, newTicker, newExchange):
+        oldE = oldExchange
+        newE = newExchange
+        
         for x in self._stocks:
             if x.ticker == oldTicker and x.exchange:
                 x.ticker = newTicker
-                x.exchange = newExchange
+                x.exchange = newE
                 break
 
-        self._changes[(oldTicker, oldExchange)] = (newTicker, newExchange)
+        self._changes[(oldTicker, oldE)] = (newTicker, newE)
 

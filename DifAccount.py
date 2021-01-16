@@ -10,6 +10,7 @@ class DifAccount(Account):
     def __init__(self, name, folder):
         super().__init__(name, "DIF Broker")
         self._import(folder)
+        self._finishImport()
 
     def _import(self, folder):
         self.__importCash(folder)

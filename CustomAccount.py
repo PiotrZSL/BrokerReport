@@ -10,6 +10,7 @@ class CustomAccount(Account):
     def __init__(self, name, folder):
         super().__init__(name, "Custom")
         self._import(folder)
+        self._finishImport()
 
     def _import(self, folder):
         self.__import(folder)

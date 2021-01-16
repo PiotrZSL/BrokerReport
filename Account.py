@@ -11,6 +11,9 @@ class Account:
         self._assets = AssetDatabase()
         self._actions = SortedList(key=lambda x : x.time)
 
+    def _finishImport(self):
+        self._assets.updateExchange()
+
     def currency(self, *args, **kwarg):
         return self._assets.getCurrency(*args, **kwarg)
 

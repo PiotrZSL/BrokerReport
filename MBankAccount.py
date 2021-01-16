@@ -9,6 +9,7 @@ class MBankAccount(Account):
     def __init__(self, name, folder):
         super().__init__(name, "mBank Biuro Maklerskie")
         self._import(folder)
+        self._finishImport()
 
     def _import(self, folder):
 
@@ -149,7 +150,7 @@ class MBankAccount(Account):
             currency = row['Waluta rozliczenia']
             count = Decimal(fixNumber(row['Liczba']))
             value = Decimal(fixNumber(row['Kurs']))
-            stokcCurrency = row['Waluta']
+            stockCurrency = row['Waluta']
             sumValue = Decimal(fixNumber(row[cleanText('Wartość')]))
             fee = Decimal(fixNumber(row['Prowizja']))
         
@@ -167,7 +168,7 @@ class MBankAccount(Account):
             main = Action(time,
                           EActionType.BUY if k else EActionType.SELL,
                           count * (Decimal(1) if k else Decimal(-1)),
-                          self.stock(isin=order[2], ticker=row['Walor'], exchange=row[cleanText('Giełda')], currency=stokcCurrency))
+                          self.stock(isin=order[2], ticker=row['Walor'], exchange=row[cleanText('Giełda')], currency=stockCurrency))
 
             self._add(main)
 
@@ -178,18 +179,18 @@ class MBankAccount(Account):
                            self.currency(currency))
                 main.addAction(f)
 
-            if stokcCurrency != currency:
+            if stockCurrency != currency:
                 sub = Action(time,
                              EActionType.PAYMENT if k else EActionType.INCOME,
                              value * count * (Decimal(-1) if k else Decimal(1)),
-                             self.currency(stokcCurrency))
+                             self.currency(stockCurrency))
 
                 main.addAction(sub)
                 
                 sub2 = Action(time,
                               EActionType.BUY if k else EActionType.SELL,
                               value * count * (Decimal(1) if k else Decimal(-1)),
-                              self.currency(stokcCurrency))
+                              self.currency(stockCurrency))
 
                 sub.addAction(sub2)
 

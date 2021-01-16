@@ -9,6 +9,7 @@ class IngAccount(Account):
     def __init__(self, name, folder):
         super().__init__(name, "ING Bank Śląski")
         self._import(folder)
+        self._finishImport()
 
     def _import(self, folder):
 
@@ -32,7 +33,7 @@ class IngAccount(Account):
                         main = Action(time,
                                       EActionType.DIVIDEND,
                                       count,
-                                      self.stock(isin=isin, exchange='WWA', currency='PLN'))
+                                      self.stock(isin=isin, exchange='XWAR', currency='PLN'))
 
                         sub = Action(time,
                                      EActionType.INCOME,
@@ -87,7 +88,7 @@ class IngAccount(Account):
                 main = Action(time,
                               EActionType.BUY if k else EActionType.SELL,
                               Decimal(fixNumber(row[cleanText('Ilość')])) * (Decimal(1) if k else Decimal(-1)),
-                              self.stock(isin=isin, ticker=row['Papier'], exchange='WWA', currency='PLN'))
+                              self.stock(isin=isin, ticker=row['Papier'], exchange='XWAR', currency='PLN'))
 
                 cost = Action(time,
                               EActionType.PAYMENT if k else EActionType.INCOME,

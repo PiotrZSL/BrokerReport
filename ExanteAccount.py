@@ -50,13 +50,10 @@ class ExanteAccount(Account):
                                           EActionType.FEE,
                                           fee*Decimal(-1),
                                           self.currency(row['Commission Currency'])))
-                    transation.append(('COMMISSION', fee*Decimal(-1), row['Commission Currency']))
+                    transations.append((time, row['Symbol ID'], 'COMMISSION', fee*Decimal(-1), row['Commission Currency']))
                 
-                transation.append(('TRADE', sub.count, str(sub.asset)))
-                transation.append(('TRADE', main.count, str(main.asset)))
-                transations.append((time, row['Symbol ID'], transation))
-
-        transations.sort(key=lambda x: x[0])
+                transations.append((time, row['Symbol ID'], 'TRADE', sub.count, str(sub.asset)))
+                transations.append((time, row['Symbol ID'], 'TRADE', main.count, str(main.asset)))
 
         financial = []
 
@@ -74,27 +71,25 @@ class ExanteAccount(Account):
         
         financial.sort(key=lambda x: x[0])
 
+        def eraseTransation(time, symbol, row, transations):
+            found = [ idx for idx, x in enumerate(transations) if time.date() == x[0].date() and symbol == x[1] and row['Operation type'] == x[2] and Decimal(fixNumber(row['Sum'])) == x[3] and row['Asset'] == x[4] ]
+            if not found:
+                print(transations)
+                print(row)
+                return False
+
+            del transations[found[0]]
+            return True
+            
+
         while financial:
             time, symbol, row = financial[0]
 
-            if transations and transations[0][0].date() == time.date() and symbol == transations[0][1] and len(financial)+1 >= len(transations[0][2]):
-                rows = transations[0][2]
-                found = True
-                for idx, nrow in enumerate(rows):
-                    if financial[idx][2]['Operation type'] != nrow[0] or Decimal(fixNumber(financial[idx][2]['Sum'])) != nrow[1] or  financial[idx][2]['Asset'] != nrow[2]:
-                        found = False
-                        break
-
-                if not found:
-                    raise Exception("Transation not found, files are not in sync - %s - %s" % (str(nrow), str(row)))
-
-                del transations[0]
-                for x in rows:
-                    del financial[0]
+            if row['Operation type'] == 'TRADE' or row['Operation type'] == 'COMMISSION':
+                if not eraseTransation(time, symbol, row, transations):
+                    raise Exception("Not consumed financial row: %s" % (str(row)))
+                del financial[0]
                 continue
-
-            if row['Operation type'] == 'TRADE':
-                raise Exception("Not consumed financial row: %s" % (str(row)))
             
             del financial[0]
 
@@ -205,7 +200,6 @@ class ExanteAccount(Account):
                                 Decimal(fixNumber(financial[1][2]['Sum'])),
                                 self.currency(financial[1][2]['Asset']))
 
-                income.addAction(tax)
                 main.addAction(income)
                 self._add(main)
                 self._split(asset, financial[1][0], split)

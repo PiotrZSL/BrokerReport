@@ -8,7 +8,7 @@ import xlrd
 
 class DifAccount(Account):
     def __init__(self, name, folder):
-        super().__init__(name, "DIF Broker")
+        super().__init__(name, "DIF")
         self._import(folder)
         self._finishImport()
 

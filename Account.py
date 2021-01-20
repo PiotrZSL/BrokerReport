@@ -1,15 +1,22 @@
 from sortedcontainers import SortedList
+from enum import Enum
 from collections import defaultdict
 from decimal import Decimal
 from Action import EActionType
 from Asset import *
 
+class ETaxType(Enum):
+    NO_TAX = 0
+    PIT8C = 1
+    MANUAL = 2
+
 class Account:
-    def __init__(self, name, broker):
+    def __init__(self, name, broker, taxType = ETaxType.MANUAL):
         self._name = name
         self._broker = broker
         self._assets = AssetDatabase()
         self._actions = SortedList(key=lambda x : x.time)
+        self._taxType = taxType
 
     def _finishImport(self):
         self._assets.updateExchange()
@@ -27,6 +34,10 @@ class Account:
     @property
     def name(self):
         return self._name
+
+    @property
+    def taxType(self):
+        return self._taxType
 
     @property
     def actions(self):

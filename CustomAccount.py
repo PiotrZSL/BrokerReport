@@ -1,4 +1,4 @@
-from Account import Account
+from Account import Account, ETaxType
 from ImportUtils import getExcel
 from Action import Action, EActionType
 from decimal import Decimal
@@ -8,7 +8,7 @@ import xlrd
 
 class CustomAccount(Account):
     def __init__(self, name, folder):
-        super().__init__(name, "Custom")
+        super().__init__(name, "Custom", ETaxType.NO_TAX if name == "METALS" else ETaxType.MANUAL)
         self._import(folder)
         self._finishImport()
 

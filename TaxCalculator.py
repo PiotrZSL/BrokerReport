@@ -59,14 +59,16 @@ class TaxCalculator:
         if tax and income and tax[0].asset != income.asset:
             raise Exception("Diffrent TAX & INCOME currences in dividends")
 
-        if tax:
-            precent = min(tax[0].percent if tax[0].percent else (tax[0].count*Decimal(-1)) / income.count * Decimal(100), Decimal(19.0))/Decimal(100)
-
         incomeValue = getNBPValue(income.count, income.asset.ticker, income.time.date().isoformat())
-        taxValue = getNBPValue(income.count*precent, income.asset.ticker, income.time.date().isoformat())
+        if not tax:
+            income.addTaxCalculation(action, incomeValue*Decimal(0.19))
+            return
+        
+        if not tax[0].percent:
+            return
 
-        if not taxValue.is_zero() and tax:
-            tax[0].addTaxCalculation(action, taxValue*Decimal(-1))
+
+        tax[0].addTaxCalculation(action, getNBPValue(tax[0].count, tax[0].asset.ticker, income.time.date().isoformat()))
         income.addTaxCalculation(action, incomeValue*Decimal(0.19))
 
     def calculate(self):

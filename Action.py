@@ -57,7 +57,6 @@ class Action:
     def tax(self):
         result = defaultdict(lambda : [Decimal(0), Decimal(0)])
         for action, value in self._taxCalculations:
-            action.time.year
             if value >= Decimal(0):
                 result[action.time.year][1] += value
             else:

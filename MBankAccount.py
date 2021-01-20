@@ -1,4 +1,4 @@
-from Account import Account
+from Account import Account, ETaxType
 from ImportUtils import getCsv, cleanText, fixNumber
 from Action import Action, EActionType
 from decimal import Decimal
@@ -7,7 +7,7 @@ import os
 
 class MBankAccount(Account):
     def __init__(self, name, folder):
-        super().__init__(name, "mBank Biuro Maklerskie")
+        super().__init__(name, "mBank", ETaxType.PIT8C if name != "IKZE" else ETaxType.NO_TAX)
         self._import(folder)
         self._finishImport()
 

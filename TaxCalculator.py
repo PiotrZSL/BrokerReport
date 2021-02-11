@@ -30,7 +30,7 @@ class TaxCalculator:
         count = action.count * Decimal(-1)
         while not count.is_zero():
             if not data:
-                raise Exception("Missing assets on sell - shorting not supported yet")
+                raise Exception("Missing assets on sell - shorting not supported yet (%s)" % (str(action.asset)))
             
             selected = count if count <= data[0][0] else data[0][0]
             precent = selected / data[0][1]

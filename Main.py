@@ -76,12 +76,13 @@ for broker in os.listdir(args.reports_folder):
                 print(" - failed to import %s/%s - %s" % (broker, account, e), flush=True)
                 raise e
 
-for x in accounts:
-    TaxCalculator(x).calculate()
-
 if args.verbose:
     for x in accounts:
         x.dump()
+
+for x in accounts:
+    TaxCalculator(x).calculate()
+
 
 ExcelOutput(args.output_xls, accounts).save()
 print("Saved %s" % (args.output_xls), flush=True)

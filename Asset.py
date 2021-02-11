@@ -1,5 +1,6 @@
 from enum import Enum
 from Exchanges import findExchange
+from InfoProvider import getStockStaticData 
 import pycountry
 import gettext
 
@@ -31,10 +32,11 @@ class Stock(Asset):
         self.isin = isin
         self.exchange = exchange
         self.currency = currency
+        self._type = 'Equity'
     
     @property
     def type(self):
-        return "Stock"
+        return self._type
     
     def __eq__(self, other):
         return type(self) == type(other) and self.ticker == other.ticker and self.exchange == other.exchange and self.currency == other.currency
@@ -51,10 +53,19 @@ class AssetDatabase:
         self._stocks = []
         self._changes = {}
 
-    def updateExchange(self):
+    def updateData(self):
         for x in self._stocks:
             if x.exchange:
                 x.exchange = findExchange(x.exchange)
+
+        for x in self._stocks:
+            if not x.isin:
+                continue
+
+            data = getStockStaticData(x.isin, x.currency)
+            if data:
+                x.name = data['name']
+                x._type = data['type']
 
     def getCurrency(self, ticker):
         if ticker in self._currency:

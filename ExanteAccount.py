@@ -75,8 +75,6 @@ class ExanteAccount(Account):
         def eraseTransation(time, symbol, row, transations):
             found = [ idx for idx, x in enumerate(transations) if time.date() == x[0].date() and symbol == x[1] and row['Operation type'] == x[2] and Decimal(fixNumber(row['Sum'])) == x[3] and row['Asset'] == x[4] ]
             if not found:
-                print(transations)
-                print(row)
                 return False
 
             del transations[found[0]]
@@ -155,11 +153,16 @@ class ExanteAccount(Account):
                 self._add(main)
                 continue
 
-            if row['Operation type'] == 'DIVIDENT':
+            if row['Operation type'] == 'DIVIDEND':
                 main = Action(time,
                               EActionType.DIVIDEND,
                               Decimal(fixNumber(row['Comment'].split('shares', 1)[0].strip())),
                               self.stock(ticker=symbol.split('.', 1)[0], exchange=symbol.split('.', 1)[1], currency=row['Asset']))
+                income = Action(time,
+                                EActionType.INCOME,
+                                Decimal(fixNumber(row['Sum'])),
+                                self.currency(row['Asset']))
+                main.addAction(income)
                 self._add(main)
                 continue
 
@@ -177,36 +180,56 @@ class ExanteAccount(Account):
                 del financial[0]
                 continue
             
+            if row['Operation type'] == 'CORPORATE ACTION' and row['Comment'].endswith(' Rights'):
+                self._add(Action(time,
+                                 EActionType.BUY,
+                                 Decimal(fixNumber(row['Sum'])),
+                                 self.stock(ticker=symbol.split('.', 1)[0], exchange=symbol.split('.', 1)[1])))
+                continue
+            
             if (row['Operation type'] == 'STOCK SPLIT' and
                 "Stock Split " in row['Comment'] and
                 len(financial) > 1 and
                 financial[0][2]['Operation type'] == 'STOCK SPLIT' and
-                financial[0][2]['Comment'] == row['Comment'] and
-                financial[0][2]['Asset'] == row['Asset'] and
+                financial[0][2]['Symbol ID'] == row['Symbol ID'] and
                 financial[1][2]['Operation type'] == 'STOCK SPLIT' and
-                financial[1][2]['Asset'] != row['Asset'] and
-                financial[1][2]['Comment'] == row['Comment']+"/ Fractional Share Payment"):
+                financial[1][2]['Symbol ID'] == row['Symbol ID']):
 
-                split = row['Comment'].replace('Stock Split ','').split(" for ", 1)
-                sold = Decimal(int(row['Sum']) + int(financial[0][2]['Sum']) * int(split[1]))
+                row_cash = row if 'Fractional Share Payment' in row['Comment'] else None
+                if not row_cash:
+                    row_cash = financial[0][2] if 'Fractional Share Payment' in financial[0][2]['Comment'] else financial[1][2]
+
+                row_old = row if row['Symbol ID'] == row['Asset'] and int(row['Sum']) < 0 else None
+                if not row_old:
+                    row_old = financial[0][2] if financial[0][2]['Asset'] == row['Symbol ID'] and int(financial[0][2]['Sum'])<0 else financial[1][2]
+
+                row_new = row if row['Symbol ID'] == row['Asset'] and int(row['Sum']) > 0 else None
+                if not row_new:
+                    row_new = financial[0][2] if financial[0][2]['Asset'] == row['Symbol ID'] and int(financial[0][2]['Sum'])>0 else financial[1][2]
+
+                split = row_old['Comment'].replace('Stock Split ','').split(" for ", 1)
+                sold = Decimal(int(row_old['Sum']) + int(row_new['Sum']) * int(split[1]))
                 split = Decimal(split[0]) / Decimal(split[1])
-                asset = self.stock(ticker=symbol.split('.', 1)[0], exchange=symbol.split('.', 1)[1], currency=financial[1][2]['Asset'])
+                asset = self.stock(ticker=symbol.split('.', 1)[0], exchange=symbol.split('.', 1)[1], currency=row_cash['Asset'])
 
-                main = Action(financial[1][0],
+                def getTime(when):
+                    d = [int(x) for x in row['When'].replace('-', ' ').replace(':', ' ').split(' ')]
+                    return datetime(d[0], d[1], d[2], d[3], d[4], d[5])
+
+                main = Action(getTime(row_old['When']),
                               EActionType.SELL,
                               sold,
                               asset)
-                income = Action(financial[1][0],
+                income = Action(getTime(row_cash['When']),
                                 EActionType.INCOME,
-                                Decimal(fixNumber(financial[1][2]['Sum'])),
-                                self.currency(financial[1][2]['Asset']))
+                                Decimal(fixNumber(row_cash['Sum'])),
+                                self.currency(row_cash['Asset']))
 
                 main.addAction(income)
                 self._add(main)
-                self._split(asset, financial[1][0], split)
+                self._split(asset, max(time, financial[0][0], financial[1][0]), split)
                 del financial[0]
                 del financial[0]
-                
                 continue
             
             if (row['Operation type'] == 'STOCK SPLIT' and

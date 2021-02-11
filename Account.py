@@ -19,7 +19,7 @@ class Account:
         self._taxType = taxType
 
     def _finishImport(self):
-        self._assets.updateExchange()
+        self._assets.updateData()
 
     def currency(self, *args, **kwarg):
         return self._assets.getCurrency(*args, **kwarg)

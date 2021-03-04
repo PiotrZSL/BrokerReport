@@ -25,3 +25,6 @@ def getNBPValue(value, curency, time):
         except:
             d = date.fromisoformat(ntime) - timedelta(days = 1)
             ntime = d.isoformat()
+
+def getNBPValueDayBefore(value, curency, time):
+    return getNBPValue(value, curency, (date.fromisoformat(time) - timedelta(days = 1)).isoformat())

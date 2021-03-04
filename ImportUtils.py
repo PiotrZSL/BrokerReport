@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta
+from collections import OrderedDict
 import xlrd
 import csv
 import binascii
@@ -23,7 +24,8 @@ def getCsv(filename, delimiter=';', encoding='ascii'):
         with open(filename, newline='', encoding=encoding, errors="ignore") as f:
             reader = csv.reader(f, delimiter=delimiter)
             values = [ row for row in reader ]
-            return [ dict(zip(values[0], row)) for row in values[1:] ]
+            ids = list(range(0, len(values[0])))
+            return [ OrderedDict(list(zip(values[0], row))+list(zip(ids, row))) for row in values[1:] ]
     except:
         return None
 

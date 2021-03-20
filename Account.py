@@ -26,6 +26,10 @@ class Account:
 
     def stock(self, *args, **kwarg):
         return self._assets.getStock(*args, **kwarg)
+
+    @property
+    def id(self):
+        return "%s/%s" % (self._broker, self._name)
     
     @property
     def broker(self):

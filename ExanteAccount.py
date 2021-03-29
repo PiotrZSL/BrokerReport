@@ -103,7 +103,36 @@ class ExanteAccount(Account):
 
             del transations[found[0]]
             return True
-            
+
+        # process autoconversions first
+        autoconversions = [ x for x in financial if x[2][F_TYPE] == 'AUTOCONVERSION' ]
+
+
+        while autoconversions:
+            time, symbol, row = autoconversions[0]
+            del autoconversions[0]
+            if autoconversions and autoconversions[0][2][F_SYMBOL] == row[F_SYMBOL] and autoconversions[0][2][F_WHEN] == row[F_WHEN]:
+                row2 = autoconversions[0][2]
+                del autoconversions[0]
+                plus = row2 if Decimal(fixNumber(row2[F_SUM])) > Decimal(fixNumber(row[F_SUM])) else row
+                minus = row2 if Decimal(fixNumber(row2[F_SUM])) < Decimal(fixNumber(row[F_SUM])) else row
+
+                main = Action(time,
+                              EActionType.PAYMENT,
+                              Decimal(fixNumber(minus[F_SUM])),
+                              self.currency(minus[F_ASSET]))
+
+                sub = Action(time,
+                             EActionType.BUY,
+                             Decimal(fixNumber(plus[F_SUM])),
+                             self.currency(plus[F_ASSET]))
+                sub.addAction(main)
+                self._add(sub)
+                continue
+
+            raise Exception("Not suported row: %s" % (str(row)))
+
+        financial = [x for x in financial if x[2][F_TYPE] != 'AUTOCONVERSION' ]
 
         while financial:
             time, symbol, row = financial[0]
@@ -123,28 +152,6 @@ class ExanteAccount(Account):
                               value,
                               self.currency(row[F_ASSET]))
                 self._add(main)
-                continue
-
-            if (row[F_TYPE] == 'AUTOCONVERSION' and 
-                row[F_SYMBOL] == 'None' and 
-                financial and 
-                financial[0][2][F_TYPE] == 'AUTOCONVERSION' and 
-                financial[0][2][F_SYMBOL] == 'None' and
-                financial[0][2][F_WHEN] == row[F_WHEN]):
-
-                main = Action(time,
-                              EActionType.PAYMENT,
-                              Decimal(fixNumber(row[F_SUM])),
-                              self.currency(row[F_ASSET]))
-
-                row = financial[0][2]
-                del financial[0]
-                sub = Action(time,
-                             EActionType.BUY,
-                             Decimal(fixNumber(row[F_SUM])),
-                             self.currency(row[F_ASSET]))
-                sub.addAction(main)
-                self._add(sub)
                 continue
 
             if (row[F_TYPE] == 'TAX' and

@@ -17,15 +17,15 @@ class ExanteAccount(Account):
         transations = []
 
         C_TIME = 0
-        C_COUNT = 7
-        C_ISIN = 16
+        C_COUNT = 8
+        C_ISIN = 4
         C_SYMBOL = 3
-        C_CURRENCY = 6
-        C_TYPE = 4
-        C_VOLUME = 11
+        C_CURRENCY = 7
+        C_TYPE = 5
+        C_VOLUME = 12
         C_SIDE = 2
-        C_COMMISSION = 8
-        C_COMMISSION_CURRENCY = 9
+        C_COMMISSION = 9
+        C_COMMISSION_CURRENCY = 10
 
         for name in os.listdir(folder):
             if not name.startswith('Trades_') or not name.endswith('.csv'):
@@ -72,12 +72,12 @@ class ExanteAccount(Account):
 
         financial = []
 
-        F_WHEN = 4
+        F_WHEN = 5
         F_SYMBOL = 2
-        F_TYPE = 3
-        F_ASSET = 6
-        F_COMMENT = 8
-        F_SUM = 5
+        F_TYPE = 4
+        F_ASSET = 7
+        F_COMMENT = 9
+        F_SUM = 6
 
         for name in os.listdir(folder):
             if not name.startswith('Financial_') or not name.endswith('.csv'):

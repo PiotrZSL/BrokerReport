@@ -81,7 +81,8 @@ class ExcelOutput:
         worksheet.set_column(0, 0, 15)
         worksheet.set_column(1, 1, 20)
         worksheet.set_column(2, 2, 40)
-        worksheet.set_column(3, 4, 15)
+        worksheet.set_column(3, 3, 10)
+        worksheet.set_column(4, 5, 15)
         worksheet.outline_settings(True, False, False, True)
         
         row = 1
@@ -103,19 +104,20 @@ class ExcelOutput:
 
         center_format = self._excel.add_format()
         center_format.set_align('center')
-        worksheet.add_table(nrow, 0, row-1, 4, {'columns': [{'header':'Date', 'header_format': center_format},
+        worksheet.add_table(nrow, 0, row-1, 5, {'columns': [{'header':'Date', 'header_format': center_format},
                                                             {'header':'Ticker'},
                                                             {'header':'Name'},
+                                                            {'header':'Country'},
                                                             {'header':'Action', 'header_format': center_format},
                                                             {'header':'Value', 'header_format': center_format}]})
 
         total_format = self._excel.add_format({'bold' : True, 'num_format': '#,##0.00', 'font_color': 'white', 'bg_color' : '#4F81BD'})
-        worksheet.write_row(row, 0, ['','','','',''], total_format)
+        worksheet.write_row(row, 0, ['','','','','',''], total_format)
         
         if account.taxType == ETaxType.NO_TAX:
             return True
 
-        column = 6
+        column = 7
         columns = [{'header': FIELD_EQUITY_PIT8C_COST if account.taxType == ETaxType.PIT8C else FIELD_EQUITY_OTHER_COST, 'header_format': center_format},
                    {'header': FIELD_EQUITY_PIT8C_INCOME if account.taxType == ETaxType.PIT8C else FIELD_EQUITY_OTHER_INCOME, 'header_format': center_format},
                    {'header': FIELD_EQUITY_SUM, 'header_format': center_format}]
@@ -144,7 +146,8 @@ class ExcelOutput:
         worksheet.set_column(0, 0, 15)
         worksheet.set_column(1, 1, 20)
         worksheet.set_column(2, 2, 40)
-        worksheet.set_column(3, 4, 15)
+        worksheet.set_column(3, 3, 10)
+        worksheet.set_column(4, 5, 15)
         worksheet.outline_settings(True, False, False, True)
         
         row = 1
@@ -173,19 +176,20 @@ class ExcelOutput:
 
         center_format = self._excel.add_format()
         center_format.set_align('center')
-        worksheet.add_table(nrow, 0, row-1, 4, {'columns': [{'header':'Date', 'header_format': center_format},
+        worksheet.add_table(nrow, 0, row-1, 5, {'columns': [{'header':'Date', 'header_format': center_format},
                                                             {'header':'Ticker'},
                                                             {'header':'Name'},
+                                                            {'header':'Country'},
                                                             {'header':'Action', 'header_format': center_format},
                                                             {'header':'Value', 'header_format': center_format}]})
 
         total_format = self._excel.add_format({'bold' : True, 'num_format': '#,##0.00', 'font_color': 'white', 'bg_color' : '#4F81BD'})
-        worksheet.write_row(row, 0, ['','','','',''], total_format)
+        worksheet.write_row(row, 0, ['','','','','',''], total_format)
 
         if account.taxType == ETaxType.NO_TAX:
             return True
         
-        column = 6
+        column = 7
         columns = [
                 {'header': FIELD_DIVIDEND_LOCAL, 'header_format': center_format},
                 {'header': FIELD_DIVIDEND_REMOTE_PAYED, 'header_format': center_format},
@@ -215,6 +219,7 @@ class ExcelOutput:
                     self._excel.add_format({'font_color': color, 'bold' : level == 0}),
                     self._excel.add_format({'font_color': color, 'bold' : level == 0}),
                     self._excel.add_format({'font_color': color, 'bold' : level == 0}),
+                    self._excel.add_format({'font_color': color, 'bold' : level == 0}),
                     self._excel.add_format({'font_color': color, 'bold' : level == 0, 'num_format': '#,##0.00'})]
 
         for x in formats:
@@ -222,16 +227,19 @@ class ExcelOutput:
 
         formats[0].set_align('center')
         formats[3].set_align('center')
+        formats[4].set_align('center')
         formats[1].set_indent(level)
 
         worksheet.write_datetime(nrow, 0, action.time, formats[0])
         worksheet.write_string(nrow, 1, str(action.asset), formats[1])
         worksheet.write_string(nrow, 2, action.asset.name if action.asset.name else action.asset.ticker, formats[2])
+        country = action.country
+        worksheet.write_string(nrow, 3, "" if not country else country, formats[3])
         tname = action.type.name
         if action.type == EActionType.TAX and action.percent:
             tname = "%s - %s %%" % (action.type.name, str(action.percent))
-        worksheet.write_string(nrow, 3, tname, formats[3])
-        worksheet.write_number(nrow, 4, action.count, formats[4])
+        worksheet.write_string(nrow, 4, tname, formats[4])
+        worksheet.write_number(nrow, 5, action.count, formats[5])
 
         if funcColumns:
             italic = self._excel.add_format({'font_color': color, 'bold' : level == 0, 'num_format': '#,##0.00'})
@@ -252,7 +260,7 @@ class ExcelOutput:
 
                 ttax = funcColumns(tax[year] if year in tax else [Decimal(0), Decimal(0)])
                 
-                begin = 6+year_index*(len(ftax)+1)
+                begin = 7+year_index*(len(ftax)+1)
                 for idx, it in enumerate(ftax):
                     if not it.is_zero():
                         worksheet.write_number(nrow, begin+idx, it, italic if it != ttax[idx] else non_italic)

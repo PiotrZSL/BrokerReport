@@ -1,6 +1,7 @@
 from Account import Account
 from ImportUtils import getCsv, cleanText, fixNumber
 from Action import Action, EActionType
+from Exchanges import Exchange
 from decimal import Decimal
 from datetime import datetime
 import os
@@ -9,6 +10,7 @@ import xlrd
 class ExanteAccount(Account):
     def __init__(self, name, folder):
         super().__init__(name, "Exante")
+        self._ex = Exchange("Cyprus", "CY", "EXANTE") 
         self._import(folder)
         self._finishImport()
 

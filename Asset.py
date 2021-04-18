@@ -9,6 +9,10 @@ class Asset:
         self.ticker = ticker
         self.name = name
 
+    @property
+    def country(self):
+        return None
+
     def __str__(self):
         return str(self.ticker)
 
@@ -33,6 +37,10 @@ class Stock(Asset):
         self.exchange = exchange
         self.currency = currency
         self._type = 'Equity'
+
+    @property
+    def country(self):
+        return self.exchange.iso if self.exchange and self.exchange.iso else None
     
     @property
     def type(self):
@@ -55,7 +63,7 @@ class AssetDatabase:
 
     def updateData(self):
         for x in self._stocks:
-            if x.exchange:
+            if x.exchange and isinstance(x.exchange, str):
                 x.exchange = findExchange(x.exchange)
 
         for x in self._stocks:

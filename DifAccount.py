@@ -1,6 +1,7 @@
 from Account import Account
 from ImportUtils import getExcel, cleanText, fixNumber
 from Action import Action, EActionType
+from Exchanges import Exchange
 from decimal import Decimal
 from datetime import datetime
 import os
@@ -9,6 +10,7 @@ import xlrd
 class DifAccount(Account):
     def __init__(self, name, folder):
         super().__init__(name, "DIF")
+        self._ex = Exchange("Portugal", "PT", "DIF") 
         self._import(folder)
         self._finishImport()
 
@@ -56,12 +58,25 @@ class DifAccount(Account):
                     continue
 
                 if cleanText(row[2].value) == cleanText('Wycofanie środków'):
-                    
+                   
+                    if row[3].value != "Custody Fee":
+                        main = Action(d,
+                                      EActionType.SEND,
+                                      inputValue,
+                                      self.currency(inputCurency))
+                        self._add(main)
+                        continue
+
                     main = Action(d,
-                                  EActionType.SEND if row[3].value != "Custody Fee" else EActionType.FEE,
-                                  inputValue,
-                                  self.currency(inputCurency))
+                                  EActionType.FEE,
+                                  0,
+                                  self.stock(None, "FEE", self._ex, inputCurency, "Custody Fee"))
+                    main.addAction(Action(d,
+                                   EActionType.PAYMENT,
+                                   inputValue,
+                                   self.currency(inputCurency)))
                     self._add(main)
+
 
     def __importDividents(self, folder):
         for name in os.listdir(folder):
@@ -153,11 +168,10 @@ class DifAccount(Account):
                     raise Exception('Transations bettwen %s - %s were not tested & implemented' % (accountCurrency, clientCurrency))
 
                 if row[16].value == 'FxSpot':
-
                     main = Action(d,
                                   EActionType.FOREX,
                                   count,
-                                  self.stock(None, ticker, ex, clientCurrency, name))
+                                  self.stock(None, ticker, self._ex, clientCurrency, name))
 
                     if not blockedClient.is_zero():
                         main.addAction(Action(d,

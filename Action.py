@@ -47,6 +47,15 @@ class Action:
         return self._parent
 
     @property
+    def country(self):
+        if self._asset.country:
+            return self._asset.country
+        if self._parent:
+            return self._parent.country
+
+        return None
+
+    @property
     def tax_calculations(self):
         return self._taxCalculations
 

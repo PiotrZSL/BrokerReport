@@ -14,24 +14,29 @@ class TaxCalculator:
         self._actions = account.actions
         self._assets = defaultdict(list)
 
-    def visitBuy(self, action):
+    def visitBuySell(self, action):
         if type(action.asset) is Currency:
             return
 
+        data = sum([x[0] for x in self._assets[action.asset]], Decimal(0))
+        data2 = data + action.count
+        if abs(data2) < abs(data):
+            self.visitSell(action)
+        else:
+            self.visitBuy(action)
+
+    def visitBuy(self, action):
         actions = [x for x in action.flat_actions if not x.actions]
         data = [copy(action.count), action.count, [ (getPLNValueDayBefore(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions ]]
         self._assets[action.asset].append(data)
 
     def visitSell(self, action):
-        if type(action.asset) is Currency:
-            return
-
         data = self._assets[action.asset]
 
         count = action.count * Decimal(-1)
         while not count.is_zero():
             if not data:
-                raise Exception("Missing assets on sell - shorting not supported yet (%s)" % (str(action.asset)))
+                raise Exception("Missing assets on sell (%s)" % (str(action.asset)))
             
             selected = count if count <= data[0][0] else data[0][0]
             precent = selected / data[0][1]
@@ -75,11 +80,11 @@ class TaxCalculator:
     def calculate(self):
         for action in self._actions:
             if action.type == EActionType.BUY:
-                self.visitBuy(action)
+                self.visitBuySell(action)
                 continue
             
             if action.type == EActionType.SELL:
-                self.visitSell(action)
+                self.visitBuySell(action)
                 continue
 
             if action.type == EActionType.FEE or action.type == EActionType.FOREX:

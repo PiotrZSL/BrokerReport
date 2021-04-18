@@ -25,6 +25,7 @@ class ExanteAccount(Account):
         C_CURRENCY = 7
         C_TYPE = 5
         C_VOLUME = 12
+        C_GAIN = 11
         C_SIDE = 2
         C_COMMISSION = 9
         C_COMMISSION_CURRENCY = 10
@@ -44,21 +45,26 @@ class ExanteAccount(Account):
 
                 k = row[C_SIDE] == 'buy'
 
+                e = None if '.' not in row[C_SYMBOL] else row[C_SYMBOL].split('.', 1)[1]
+                if row[C_SYMBOL].endswith('.E.FX'):
+                    e = self._ex
                 main = Action(time,
                               EActionType.BUY if k else EActionType.SELL,
                               Decimal(fixNumber(row[C_COUNT]))*(Decimal(1) if k else Decimal(-1)),
                               self.stock(None if row[C_ISIN] == 'None' else row[C_ISIN],
                                          row[C_SYMBOL].split('.', 1)[0],
-                                         None if '.' not in row[C_SYMBOL] else row[C_SYMBOL].split('.', 1)[1],
+                                         e,
                                          row[C_CURRENCY]) if row[C_TYPE] != 'FOREX' else self.currency(row[C_SYMBOL].split('/')[0]))
                 self._add(main)
 
-                sub = Action(time,
-                             EActionType.PAYMENT if k else EActionType.INCOME,
-                             Decimal(fixNumber(row[C_VOLUME]))*(Decimal(-1) if k else Decimal(1)),
-                             self.currency(row[C_CURRENCY]))
+                v = Decimal(fixNumber(row[C_VOLUME]))*(Decimal(-1) if k else Decimal(1)) if not row[C_SYMBOL].endswith('.E.FX') else Decimal(fixNumber(row[C_GAIN]))
+                if not v.is_zero():
+                    sub = Action(time,
+                                 EActionType.PAYMENT if v < Decimal(0) else EActionType.INCOME,
+                                 v,
+                                 self.currency(row[C_CURRENCY]))
 
-                main.addAction(sub)
+                    main.addAction(sub)
 
                 fee = Decimal(fixNumber(row[C_COMMISSION]))
                 transation = []
@@ -69,8 +75,9 @@ class ExanteAccount(Account):
                                           self.currency(row[C_COMMISSION_CURRENCY])))
                     transations.append((time, row[C_SYMBOL], 'COMMISSION', fee*Decimal(-1), row[C_COMMISSION_CURRENCY]))
                 
-                transations.append((time, row[C_SYMBOL], 'TRADE', sub.count, str(sub.asset)))
-                transations.append((time, row[C_SYMBOL], 'TRADE', main.count, str(main.asset)))
+                if not v.is_zero():
+                    transations.append((time, row[C_SYMBOL], 'TRADE', v, row[C_CURRENCY]))
+                transations.append((time, row[C_SYMBOL], 'TRADE', main.count, str(main.asset) if not row[C_SYMBOL].endswith('.E.FX') else row[C_SYMBOL]))
 
         financial = []
 
@@ -156,20 +163,15 @@ class ExanteAccount(Account):
                 self._add(main)
                 continue
 
-            if (row[F_TYPE] == 'TAX' and
-                financial and
-                financial[0][2][F_TYPE] == 'DIVIDEND' and
-                financial[0][2][F_SYMBOL] == symbol and
-                financial[0][2][F_WHEN] == row[F_WHEN]):
+            if row[F_TYPE] == 'TAX':
+                    continue
 
+            if row[F_TYPE] == 'DIVIDEND' and ' tax ' in row[F_COMMENT]:
                 tax = Action(time,
                              EActionType.TAX,
-                             Decimal(fixNumber(row[F_SUM])),
+                             Decimal(fixNumber(row[F_COMMENT].split(' tax ', 1)[1].split('(', 1)[0].strip())),
                              self.currency(row[F_ASSET]),
-                             Decimal(fixNumber(financial[0][2][F_COMMENT].split('(')[-1].split('%)', 1)[0])))
-
-                row = financial[0][2]
-                del financial[0]
+                             Decimal(fixNumber(row[F_COMMENT].split('(')[-1].split('%)', 1)[0])))
 
                 main = Action(time,
                               EActionType.DIVIDEND,

@@ -5,7 +5,7 @@ from decimal import Decimal
 from Action import EActionType
 from Asset import *
 
-class ETaxType(Enum):
+class ETaxType:
     NO_TAX = 0
     PIT8C = 1
     MANUAL = 2

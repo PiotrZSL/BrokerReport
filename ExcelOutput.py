@@ -10,6 +10,7 @@ class ExcelOutput:
         self._excel = None
         self._accounts = accounts
         self._taxCalculations = []
+        self._taxCountryCalculations = {}
 
     def save(self):
         self._excel = xw.Workbook(self.__filename)
@@ -39,6 +40,7 @@ class ExcelOutput:
         center_format.set_align('center')
 
         value_names = [ FIELD_EQUITY_PIT8C_COST, FIELD_EQUITY_PIT8C_INCOME, FIELD_EQUITY_OTHER_COST, FIELD_EQUITY_OTHER_INCOME, FIELD_EQUITY_SUM, FIELD_DIVIDEND_LOCAL, FIELD_DIVIDEND_REMOTE_PAYED, FIELD_DIVIDEND_REMOTE_TAX, FIELD_DIVIDEND_REMOTE_SUM ]
+
         worksheet.set_column(1, len(value_names)+2, 15)
         columns = [ {'header':'Account', 'header_format': center_format } ]
         for value in value_names:
@@ -70,6 +72,22 @@ class ExcelOutput:
             worksheet.write_row(row, 0, [''] + sum_values, total_format)
 
             row += 2
+            if [x for x,y in self._taxCountryCalculations.keys() if x == year]:
+                begin = row
+                row += 1
+                for k, v in self._taxCountryCalculations.items():
+                    if k[0] != year:
+                        continue
+                    worksheet.write_string(row, 0, str(k[1]), name_format)
+                    for idx, value in enumerate(v):
+                        worksheet.write_number(row, 1+idx, value, number_format)
+                    row += 1
+                worksheet.add_table(begin, 0, row-1, 3, {'columns' : [{'header':'Account', 'header_format': center_format},
+                                                                      {'header':'Cost', 'header_format': center_format},
+                                                                      {'header':'Income', 'header_format': center_format},
+                                                                      {'header': FIELD_FOREIGN_REVENUE, 'header_format': center_format}]})
+                                                                      
+                row += 1
 
 
     def __addAccountHistoryPage(self, account):
@@ -100,7 +118,7 @@ class ExcelOutput:
         for action in  reversed(account.actions):
             if action.type == EActionType.DIVIDEND:
                 continue
-            row = self.__visitAction(years, worksheet, row, 0, action, None if account.taxType == ETaxType.NO_TAX else calcTax, sum_tax, Rounding.TAX_TRANSACTION_COST_ROUNDING, Rounding.TAX_TRANSACTION_GAIN_ROUNDING)
+            row = self.__visitAction(years, worksheet, row, 0, action, None if account.taxType == ETaxType.NO_TAX else calcTax, sum_tax, Rounding.TAX_TRANSACTION_COST_ROUNDING, Rounding.TAX_TRANSACTION_GAIN_ROUNDING, account.taxType == ETaxType.MANUAL)
 
         center_format = self._excel.add_format()
         center_format.set_align('center')
@@ -212,7 +230,7 @@ class ExcelOutput:
             column += 5
         return True
 
-    def __visitAction(self, years, worksheet, row, level, action, funcColumns, sumTax, roundCost = None, roundIncome = None):
+    def __visitAction(self, years, worksheet, row, level, action, funcColumns, sumTax, roundCost = None, roundIncome = None, calcCountryTax = False):
         nrow = row
         color = 'black' if  level == 0 else '#333333'
         formats = [ self._excel.add_format({'font_color': color, 'bold' : level == 0, 'num_format': 'yyyy-mm-dd'}),
@@ -257,6 +275,13 @@ class ExcelOutput:
                     ftax = funcColumns((Rounding.round(value[0], roundCost), Rounding.round(value[1], roundIncome)))
                     for idx, v in enumerate(ftax):
                         sumTax[year][idx] += v
+                    if calcCountryTax:
+                        key = (year, action.country)
+                        if key not in self._taxCountryCalculations:
+                            self._taxCountryCalculations[key] = ftax
+                        else:
+                            for idx, v in enumerate(ftax):
+                                self._taxCountryCalculations[key][idx] += v
 
                 ttax = funcColumns(tax[year] if year in tax else [Decimal(0), Decimal(0)])
                 

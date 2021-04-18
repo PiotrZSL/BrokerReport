@@ -1,6 +1,6 @@
 from Action import *
 from Asset import *
-from TaxUtils import getNBPValueDayBefore
+from TaxUtils import getPLNValueDayBefore
 from decimal import Decimal
 from collections import defaultdict
 from copy import copy
@@ -19,7 +19,7 @@ class TaxCalculator:
             return
 
         actions = [x for x in action.flat_actions if not x.actions]
-        data = [copy(action.count), action.count, [ (getNBPValueDayBefore(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions ]]
+        data = [copy(action.count), action.count, [ (getPLNValueDayBefore(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions ]]
         self._assets[action.asset].append(data)
 
     def visitSell(self, action):
@@ -43,14 +43,14 @@ class TaxCalculator:
                 del data[0]
 
         actions = [x for x in action.flat_actions if not x.actions]
-        for pln, act in [ (getNBPValueDayBefore(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions ]:
+        for pln, act in [ (getPLNValueDayBefore(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions ]:
             act.addTaxCalculation(action, pln)
 
     def visitInstant(self, action):
         if not action.actions and type(action.asset) is not Currency:
             return
         actions = [x for x in action.flat_actions if not x.actions] if action.actions else [action]
-        for pln, act in [ (getNBPValueDayBefore(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions ]:
+        for pln, act in [ (getPLNValueDayBefore(x.count, x.asset.ticker, x.time.date().isoformat()), x) for x in actions ]:
             act.addTaxCalculation(action, pln)
 
     def visitDividend(self, action):
@@ -60,7 +60,7 @@ class TaxCalculator:
         if tax and income and tax[0].asset != income.asset:
             raise Exception("Diffrent TAX & INCOME currences in dividends")
 
-        incomeValue = getNBPValueDayBefore(income.count, income.asset.ticker, income.time.date().isoformat())
+        incomeValue = getPLNValueDayBefore(income.count, income.asset.ticker, income.time.date().isoformat())
         if not tax:
             income.addTaxCalculation(action, incomeValue*Decimal(0.19))
             return
@@ -69,7 +69,7 @@ class TaxCalculator:
             return
 
 
-        tax[0].addTaxCalculation(action, getNBPValueDayBefore(tax[0].count, tax[0].asset.ticker, income.time.date().isoformat()))
+        tax[0].addTaxCalculation(action, getPLNValueDayBefore(tax[0].count, tax[0].asset.ticker, income.time.date().isoformat()))
         income.addTaxCalculation(action, incomeValue*Decimal(0.19))
 
     def calculate(self):

@@ -169,7 +169,7 @@ class ExanteAccount(Account):
             if row[F_TYPE] == 'DIVIDEND' and ' tax ' in row[F_COMMENT]:
                 tax = Action(time,
                              EActionType.TAX,
-                             Decimal(fixNumber(row[F_COMMENT].split(' tax ', 1)[1].split('(', 1)[0].strip())),
+                             Decimal(-1)*Decimal(fixNumber(row[F_COMMENT].split(' tax ', 1)[1].split('(', 1)[0].strip())),
                              self.currency(row[F_ASSET]),
                              Decimal(fixNumber(row[F_COMMENT].split('(')[-1].split('%)', 1)[0])))
 

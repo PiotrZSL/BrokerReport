@@ -18,7 +18,7 @@ def getNBPValue(value, curency, time):
     while True:
         try:
             data = requests.get("http://api.nbp.pl/api/exchangerates/rates/A/%s/%s?format=json" % (curency, ntime))
-            data = Decimal(data.json()["rates"][0]["mid"])
+            data = Decimal(str(data.json()["rates"][0]["mid"]))
             CACHE['NBP'][(curency, time)] = data
             CACHE['NBP'][(curency, ntime)] = data
             return data * value
